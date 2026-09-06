@@ -1,0 +1,7 @@
+{
+  "name": "NER-SAFE — Live Weather & Land Monitor",
+  "description": "High-precision real-time meteorological, terrain DEM slope, volumetric soil moisture, and verified historical landslide monitoring for the 8 North Eastern Region (NER) states under SIH26001.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

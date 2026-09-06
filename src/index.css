@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 20s linear infinite;
+}
+
+/* Custom Pin and Leaflet cleanups */
+.custom-pin-container {
+  background: transparent;
+  border: none;
+}
+.hub-pin {
+  background: transparent;
+  border: none;
+}
+
+/* Hide scrollbar for clean horizontal tab scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
