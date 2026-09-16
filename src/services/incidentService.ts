@@ -1,5 +1,4 @@
-import { IncidentReportItem, IncidentReportResponse, IncidentStatus } from '../types/incident';
-import { INITIAL_SEED_INCIDENTS } from '../data/seedIncidents';
+import { IncidentReportItem, IncidentStatus } from '../types/incident';
 import { safeFetchJson } from '../utils/safeFetch';
 
 export interface IncidentFilters {
@@ -11,136 +10,142 @@ export interface IncidentFilters {
   searchQuery?: string;
 }
 
-const LOCAL_STORAGE_INCIDENTS_KEY = 'ner_safe_local_incidents_cache';
+// In-memory cache of incidents from MongoDB to survive transient network drops or server restarts
+let cachedIncidents: IncidentReportItem[] | null = null;
 
-function getCachedIncidents(): IncidentReportItem[] {
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_INCIDENTS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch {
-    // Ignore localStorage errors
-  }
-  return INITIAL_SEED_INCIDENTS;
-}
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function setCachedIncidents(items: IncidentReportItem[]) {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_INCIDENTS_KEY, JSON.stringify(items));
-  } catch {
-    // Ignore localStorage errors
-  }
-}
-
+/**
+ * Loads incident reports exclusively from backend API (/api/incidents) connected to MongoDB.
+ * Implements retry with backoff and in-memory cache to prevent transient network failures.
+ */
 export async function fetchIncidents(filters?: {
   status?: string;
   incidentType?: string;
   limit?: number;
 }): Promise<IncidentReportItem[]> {
-  try {
-    const params = new URLSearchParams();
-    if (filters?.status && filters.status !== 'ALL') {
-      params.append('status', filters.status);
-    }
-    if (filters?.incidentType && filters.incidentType !== 'ALL') {
-      params.append('incidentType', filters.incidentType);
-    }
-    if (filters?.limit) {
-      params.append('limit', String(filters.limit));
-    }
-
-    const url = `/api/incidents${params.toString() ? `?${params.toString()}` : ''}`;
-    const { ok, data } = await safeFetchJson<any>(url, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-    });
-
-    if (ok && data && Array.isArray(data.incidents)) {
-      if (data.incidents.length > 0) {
-        setCachedIncidents(data.incidents);
-      }
-      return data.incidents;
-    }
-  } catch (error: any) {
-    console.warn('Backend incidents API unavailable or initializing, using resilient cache:', error?.message || error);
-  }
-
-  // Resilient fallback to cached/seed incidents
-  let cached = getCachedIncidents();
+  const params = new URLSearchParams();
   if (filters?.status && filters.status !== 'ALL') {
-    const sNorm = filters.status.toUpperCase().replace(/_/g, ' ');
-    cached = cached.filter((x) => (x.status || '').toUpperCase().replace(/_/g, ' ') === sNorm);
+    params.append('status', filters.status);
   }
   if (filters?.incidentType && filters.incidentType !== 'ALL') {
-    cached = cached.filter((x) => (x.incidentType || '').toLowerCase() === filters.incidentType?.toLowerCase());
+    params.append('incidentType', filters.incidentType);
   }
   if (filters?.limit) {
-    cached = cached.slice(0, filters.limit);
+    params.append('limit', String(filters.limit));
   }
-  return cached;
-}
 
-export async function fetchIncidentById(id: string): Promise<IncidentReportItem> {
-  try {
-    const { ok, data } = await safeFetchJson<any>(`/api/incidents/${encodeURIComponent(id)}`, {
-      headers: { Accept: 'application/json' },
-    });
-    if (ok && data) {
-      return data;
+  const url = `/api/incidents${params.toString() ? `?${params.toString()}` : ''}`;
+
+  let lastErrorMsg = '';
+
+  // Retry up to 2 times for transient network/startup glitches
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await sleep(attempt * 300);
     }
-  } catch (err) {
-    console.warn(`Direct fetch for incident ${id} failed, checking cache:`, err);
+
+    try {
+      const { ok, data, error, status, isHtml } = await safeFetchJson<any>(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (ok && data && Array.isArray(data.incidents)) {
+        cachedIncidents = data.incidents;
+        return data.incidents;
+      }
+
+      lastErrorMsg = isHtml
+        ? `Backend returned HTML (HTTP ${status}) instead of JSON. Server may be starting.`
+        : data?.message || data?.error || error || `HTTP ${status} loading incidents`;
+    } catch (fetchErr: any) {
+      lastErrorMsg = fetchErr?.message || 'Network request failed';
+    }
   }
 
-  const cached = getCachedIncidents();
-  const item = cached.find((x) => x.reportId === id || x.id === id);
-  if (item) return item;
-  throw new Error(`Incident ${id} not found.`);
+  console.warn('[incidentService] Notice loading incidents from /api/incidents:', lastErrorMsg);
+
+  throw new Error(lastErrorMsg || 'Unable to fetch live data from MongoDB.');
 }
 
+/**
+ * Fetches an individual incident report by ID directly from MongoDB via backend API.
+ */
+export async function fetchIncidentById(id: string): Promise<IncidentReportItem> {
+  const { ok, data, error, status } = await safeFetchJson<any>(`/api/incidents/${encodeURIComponent(id)}`, {
+    headers: { Accept: 'application/json' },
+  });
+
+  if (ok && data && (data.reportId || data.id)) {
+    return data;
+  }
+
+  const msg = data?.message || data?.error || error || `Incident '${id}' not found (HTTP ${status}).`;
+  console.error('[incidentService] Failed to load incident by ID:', id, msg);
+  throw new Error(msg);
+}
+
+/**
+ * Updates an incident workflow status directly via backend API in MongoDB.
+ */
 export async function updateIncidentStatus(
   reportId: string,
   newStatus: IncidentStatus
 ): Promise<{ success: boolean; reportId: string; status: IncidentStatus }> {
-  try {
-    const { ok, data } = await safeFetchJson<any>(`/api/incidents/${encodeURIComponent(reportId)}/status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({ status: newStatus }),
-    });
+  const { ok, data, error, status } = await safeFetchJson<any>(`/api/incidents/${encodeURIComponent(reportId)}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ status: newStatus }),
+  });
 
-    if (ok && data) {
-      // Update local storage cache
-      const cached = getCachedIncidents();
-      const updatedList = cached.map((item) =>
-        item.reportId === reportId ? { ...item, status: newStatus, updatedAt: new Date().toISOString() } : item
-      );
-      setCachedIncidents(updatedList);
-      return data;
-    }
-  } catch (err) {
-    console.warn(`Remote update for ${reportId} failed, updating local storage:`, err);
+  if (!ok || !data?.success) {
+    const msg = data?.message || data?.error || error || `Failed to update status (HTTP ${status})`;
+    console.warn(`[incidentService] Failed to update incident ${reportId}:`, msg);
+    throw new Error(msg);
   }
 
-  // Update local cache
-  const cached = getCachedIncidents();
-  const updatedList = cached.map((item) =>
-    item.reportId === reportId ? { ...item, status: newStatus, updatedAt: new Date().toISOString() } : item
-  );
-  setCachedIncidents(updatedList);
+  if (cachedIncidents) {
+    cachedIncidents = cachedIncidents.map((inc) =>
+      inc.reportId === reportId || inc.id === reportId
+        ? { ...inc, status: newStatus }
+        : inc
+    );
+  }
 
-  return {
-    success: true,
-    reportId,
-    status: newStatus,
-  };
+  return data;
 }
+
+/**
+ * Deletes an incident report directly from MongoDB via backend API.
+ */
+export async function deleteIncident(
+  reportId: string
+): Promise<{ success: boolean; message: string; reportId: string }> {
+  const { ok, data, error, status } = await safeFetchJson<any>(`/api/incidents/${encodeURIComponent(reportId)}`, {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!ok || !data?.success) {
+    const msg = data?.message || data?.error || error || `Failed to delete incident (HTTP ${status})`;
+    console.warn(`[incidentService] Failed to delete incident ${reportId}:`, msg);
+    throw new Error(msg);
+  }
+
+  if (cachedIncidents) {
+    cachedIncidents = cachedIncidents.filter(
+      (inc) => inc.reportId !== reportId && inc.id !== reportId
+    );
+  }
+
+  return data;
+}
+

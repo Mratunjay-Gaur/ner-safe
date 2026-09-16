@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, MapPin, Navigation, ChevronDown, Check } from 'lucide-react';
 import { INDIA_STATES_DATA, ALL_DISTRICTS } from '../data/indiaLocations';
 import { LocationItem } from '../types/weather';
@@ -14,6 +15,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   onSelectLocation,
   isLoading,
 }) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [geoLocating, setGeoLocating] = useState(false);
@@ -64,7 +66,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   // Geolocation detector
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
-      setGeoError('Geolocation is not supported by your browser.');
+      setGeoError(t('location.geoNotSupported', 'Geolocation is not supported by your browser.'));
       return;
     }
 
@@ -92,7 +94,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       },
       (err) => {
         setGeoLocating(false);
-        setGeoError('Could not access current location. Please select manually.');
+        setGeoError(t('location.geoError', 'Could not access current location. Please select manually.'));
       },
       { timeout: 8000 }
     );
@@ -110,40 +112,40 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   ];
 
   return (
-    <section id="location-selector-section" className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200 shadow-2xs mb-4">
+    <section id="location-selector-section" className="bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] mb-4 transition-all">
       {/* Top row: Select groups & Quick Search */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-3">
         {/* Three Sleek Select Groups */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1">
           {/* Country */}
-          <div className="flex items-center bg-slate-50/70 border border-slate-200 rounded-lg px-3 h-10">
+          <div className="flex items-center bg-slate-50/80 border border-slate-200/90 rounded-xl px-3.5 h-10.5">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mr-2 shrink-0">
-              Country
+              {t('location.country', 'Country')}
             </span>
             <span className="text-xs font-bold text-slate-800 truncate">
-              India
+              {t('location.india', 'India')}
             </span>
           </div>
 
           {/* State Selector */}
-          <div className="flex items-center bg-white border border-slate-200 rounded-lg px-3 h-10 relative focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500">
+          <div className="flex items-center bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl px-3.5 h-10.5 relative focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 transition-all shadow-2xs">
             <label htmlFor="state-select-dropdown" className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mr-2 shrink-0">
-              State
+              {t('location.state', 'State')}
             </label>
             <select
               id="state-select-dropdown"
               value={selectedLocation.state}
               onChange={(e) => handleStateChange(e.target.value)}
-              className="w-full bg-transparent text-xs font-bold text-slate-800 border-none outline-hidden cursor-pointer appearance-none pr-4"
+              className="w-full bg-transparent text-xs font-bold text-slate-800 border-none outline-hidden cursor-pointer appearance-none pr-5"
             >
-              <optgroup label="✨ North Eastern Region (NER)">
+              <optgroup label={t('location.nerRegionGroup', '✨ North Eastern Region (NER)')}>
                 {INDIA_STATES_DATA.filter((s) => s.isNer).map((state) => (
                   <option key={state.code} value={state.name}>
-                    {state.name} (NER)
+                    {state.name} ({t('weather.nerStation', 'NER')})
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="🇮🇳 Other States & UTs">
+              <optgroup label={t('location.otherStatesGroup', '🇮🇳 Other States & UTs')}>
                 {INDIA_STATES_DATA.filter((s) => !s.isNer).map((state) => (
                   <option key={state.code} value={state.name}>
                     {state.name}
@@ -151,19 +153,19 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 ))}
               </optgroup>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* District Selector */}
-          <div className="flex items-center bg-white border border-slate-200 rounded-lg px-3 h-10 relative focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500">
+          <div className="flex items-center bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl px-3.5 h-10.5 relative focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 transition-all shadow-2xs">
             <label htmlFor="district-select-dropdown" className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mr-2 shrink-0">
-              District
+              {t('location.district', 'District')}
             </label>
             <select
               id="district-select-dropdown"
               value={selectedLocation.id}
               onChange={(e) => handleDistrictChange(e.target.value)}
-              className="w-full bg-transparent text-xs font-bold text-slate-800 border-none outline-hidden cursor-pointer appearance-none pr-4"
+              className="w-full bg-transparent text-xs font-bold text-slate-800 border-none outline-hidden cursor-pointer appearance-none pr-5"
             >
               {currentStateObj.districts.map((district) => (
                 <option key={district.id} value={district.id}>
@@ -171,13 +173,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
 
         {/* Global Search Box */}
-        <div className="relative w-full lg:w-72">
-          <div className="relative flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2.5 h-10 focus-within:bg-white focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
+        <div className="relative w-full lg:w-80">
+          <div className="relative flex items-center bg-slate-50/90 hover:bg-white border border-slate-200/90 rounded-xl px-3 h-10.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 transition-all shadow-2xs">
             <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
             <input
               id="district-search-input"
@@ -188,8 +190,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 setIsSearching(true);
               }}
               onFocus={() => setIsSearching(true)}
-              placeholder="Search district..."
-              className="w-full bg-transparent text-xs text-slate-800 border-none outline-hidden placeholder:text-slate-400"
+              placeholder={t('location.searchPlaceholder', 'Search station or district...')}
+              className="w-full bg-transparent text-xs font-medium text-slate-800 border-none outline-hidden placeholder:text-slate-400"
             />
             {searchQuery && (
               <button
@@ -197,7 +199,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                   setSearchQuery('');
                   setIsSearching(false);
                 }}
-                className="text-xs text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                className="text-xs text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -206,9 +208,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
           {/* Search Dropdown Overlay */}
           {isSearching && searchQuery.trim().length > 0 && (
-            <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-slate-200 z-40 max-h-60 overflow-y-auto">
+            <div className="absolute left-0 right-0 top-full mt-1.5 bg-white/95 backdrop-blur-xl rounded-xl shadow-[0_12px_32px_rgba(15,23,42,0.12)] border border-slate-200 z-50 max-h-64 overflow-y-auto custom-scrollbar">
               {searchResults.length > 0 ? (
-                <ul className="py-1">
+                <ul className="py-1.5">
                   {searchResults.map((d) => (
                     <li key={d.id}>
                       <button
@@ -217,15 +219,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                           setSearchQuery('');
                           setIsSearching(false);
                         }}
-                        className="w-full px-3 py-1.5 text-left text-xs flex items-center justify-between hover:bg-blue-50 transition-colors cursor-pointer"
+                        className="w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-sky-50 transition-colors cursor-pointer"
                       >
                         <div>
-                          <span className="font-bold text-slate-800">{d.name}</span>
-                          <span className="text-slate-400 ml-1.5 font-normal">({d.state})</span>
+                          <span className="font-bold text-slate-900">{d.name}</span>
+                          <span className="text-slate-400 ml-1.5 font-normal text-[11px]">({d.state})</span>
                         </div>
                         {d.isNer && (
-                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
-                            NER
+                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-200/60">
+                            {t('weather.nerStation', 'NER')}
                           </span>
                         )}
                       </button>
@@ -233,8 +235,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                   ))}
                 </ul>
               ) : (
-                <div className="p-3 text-xs text-slate-400 text-center">
-                  No matching district found.
+                <div className="p-4 text-xs text-slate-500 text-center font-medium">
+                  {t('location.noMatchingDistrict', 'No matching district found.')}
                 </div>
               )}
             </div>
@@ -243,9 +245,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       </div>
 
       {/* Bottom Bar: Quick NER Hotspots & GPS Action */}
-      <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+      <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quick Hubs:</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">{t('location.quickHubs', 'Quick Hubs:')}</span>
           {quickNerLocations.map((hub) => {
             const isCurrent = selectedLocation.name.toLowerCase().includes(hub.name.toLowerCase());
             return (
@@ -255,10 +257,10 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                   const target = ALL_DISTRICTS.find((d) => d.id === hub.id);
                   if (target) onSelectLocation(target);
                 }}
-                className={`text-[11px] px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
+                className={`text-[11px] px-2.5 py-1 rounded-lg font-semibold transition-all btn-press cursor-pointer ${
                   isCurrent
-                    ? 'bg-blue-600 text-white shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900 border border-slate-200/50'
                 }`}
               >
                 {hub.name}
@@ -271,15 +273,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           id="detect-gps-location-btn"
           onClick={handleDetectLocation}
           disabled={geoLocating || isLoading}
-          className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-0.5 rounded-md border border-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 hover:text-sky-700 hover:bg-sky-50/80 px-2.5 py-1 rounded-lg border border-slate-200/80 transition-all disabled:opacity-50 cursor-pointer btn-press shadow-2xs"
         >
-          <Navigation className={`w-3 h-3 ${geoLocating ? 'animate-spin text-blue-600' : ''}`} />
-          <span>{geoLocating ? 'Locating...' : 'GPS'}</span>
+          <Navigation className={`w-3.5 h-3.5 ${geoLocating ? 'animate-spin text-sky-600' : 'text-sky-600'}`} />
+          <span>{geoLocating ? t('location.locating', 'Locating...') : t('location.gpsDetect', 'GPS Detect')}</span>
         </button>
       </div>
 
       {geoError && (
-        <div className="mt-2 text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+        <div className="mt-2.5 text-xs text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-lg border border-amber-200/80 font-medium">
           {geoError}
         </div>
       )}

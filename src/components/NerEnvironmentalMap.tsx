@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import {
   Layers,
@@ -34,6 +35,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
   selectedLandslide,
   onSelectLandslide,
 }) => {
+  const { t } = useTranslation();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
@@ -500,7 +502,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
             }`}
             title="OpenTopoMap Topographic Contours"
           >
-            Terrain DEM
+            {t('map.terrainDem', 'Terrain DEM')}
           </button>
           <button
             onClick={() => setBaseMapType('satellite')}
@@ -509,7 +511,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
             }`}
             title="ESRI World Imagery / Sentinel Satellite"
           >
-            Satellite
+            {t('map.satellite', 'Satellite')}
           </button>
           <button
             onClick={() => setBaseMapType('carto')}
@@ -518,7 +520,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
             }`}
             title="CartoDB Clean GIS Layer"
           >
-            Roads / GIS
+            {t('map.roadsGis', 'Roads / GIS')}
           </button>
         </div>
 
@@ -529,16 +531,16 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
             className={`p-2 rounded-lg border shadow-xs transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold ${
               isLayerControlOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
-            title="Toggle Map Data Overlays"
+            title={t('map.toggleOverlays', 'Toggle Map Data Overlays')}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Layers</span>
+            <span className="hidden sm:inline">{t('map.layers', 'Layers')}</span>
           </button>
 
           {isLayerControlOpen && (
             <div className="absolute right-0 mt-1.5 w-60 bg-white rounded-xl shadow-lg border border-slate-200 p-2.5 z-50 text-xs">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
-                <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">Map Overlay Layers</span>
+                <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">{t('map.overlayLayersTitle', 'Map Overlay Layers')}</span>
                 <span className="text-[10px] text-slate-400 font-mono">SIH26001 GIS</span>
               </div>
 
@@ -546,7 +548,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
                 <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 bg-red-600 rounded-sm transform rotate-45 shrink-0 inline-block" />
-                    <span className="font-medium text-slate-700">Historical Landslides</span>
+                    <span className="font-medium text-slate-700">{t('map.historicalLandslides', 'Historical Landslides')}</span>
                   </div>
                   <input
                     type="checkbox"
@@ -559,7 +561,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
                 <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
                   <div className="flex items-center gap-2">
                     <Mountain className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span className="font-medium text-slate-700">Elevation & Slope (DEM)</span>
+                    <span className="font-medium text-slate-700">{t('map.elevationSlopeDem', 'Elevation & Slope (DEM)')}</span>
                   </div>
                   <input
                     type="checkbox"
@@ -572,7 +574,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
                 <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
                   <div className="flex items-center gap-2">
                     <Droplets className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span className="font-medium text-slate-700">Soil Moisture Zone</span>
+                    <span className="font-medium text-slate-700">{t('map.soilMoistureZone', 'Soil Moisture Zone')}</span>
                   </div>
                   <input
                     type="checkbox"
@@ -585,7 +587,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
                 <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
                   <div className="flex items-center gap-2">
                     <Satellite className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                    <span className="font-medium text-slate-700">Satellite Granule Footprint</span>
+                    <span className="font-medium text-slate-700">{t('map.satelliteFootprint', 'Satellite Granule Footprint')}</span>
                   </div>
                   <input
                     type="checkbox"
@@ -598,7 +600,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
                 <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
                   <div className="flex items-center gap-2">
                     <Radio className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span className="font-medium text-slate-700">Live Weather Marker</span>
+                    <span className="font-medium text-slate-700">{t('map.liveWeatherMarker', 'Live Weather Marker')}</span>
                   </div>
                   <input
                     type="checkbox"
@@ -611,7 +613,7 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
                 <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                    <span className="font-medium text-slate-700">District Boundary Buffer</span>
+                    <span className="font-medium text-slate-700">{t('map.districtBoundary', 'District Boundary Buffer')}</span>
                   </div>
                   <input
                     type="checkbox"
@@ -638,11 +640,11 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
         <div className="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-xs flex items-center gap-3 text-[11px]">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 bg-red-600 rounded-sm transform rotate-45 shrink-0 inline-block" />
-            <span className="font-semibold text-slate-700">Historical Landslides (GSI/NASA)</span>
+            <span className="font-semibold text-slate-700">{t('map.historicalLandslidesLegend', 'Historical Landslides (GSI/NASA)')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 bg-blue-600 rounded-full shrink-0 inline-block" />
-            <span className="font-semibold text-slate-700">District Focus</span>
+            <span className="font-semibold text-slate-700">{t('map.districtFocusLegend', 'District Focus')}</span>
           </div>
         </div>
       </div>
@@ -652,21 +654,21 @@ export const NerEnvironmentalMap: React.FC<NerEnvironmentalMapProps> = ({
         <button
           onClick={handleZoomIn}
           className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-lg border border-slate-200 shadow-xs transition-colors cursor-pointer"
-          title="Zoom In"
+          title={t('common.zoomIn', 'Zoom In')}
         >
           <ZoomIn className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={handleZoomOut}
           className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-lg border border-slate-200 shadow-xs transition-colors cursor-pointer"
-          title="Zoom Out"
+          title={t('common.zoomOut', 'Zoom Out')}
         >
           <ZoomOut className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={handleResetView}
           className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-lg border border-slate-200 shadow-xs transition-colors cursor-pointer"
-          title="Center on District"
+          title={t('map.centerOnDistrict', 'Center on District')}
         >
           <Maximize2 className="w-3.5 h-3.5" />
         </button>

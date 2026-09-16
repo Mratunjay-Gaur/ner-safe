@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'motion/react';
+import { WEBSITE_LOGO_URL } from './NerSafeLogo';
 import {
   Shield,
   RefreshCw,
@@ -20,9 +23,14 @@ import {
   ShieldCheck,
   RotateCcw,
   Sparkles,
+  Database,
+  Radio,
+  SlidersHorizontal,
+  X,
+  Copy,
 } from 'lucide-react';
 import { IncidentReportItem, IncidentStatus } from '../types/incident';
-import { fetchIncidents, updateIncidentStatus } from '../services/incidentService';
+import { fetchIncidents, updateIncidentStatus, deleteIncident } from '../services/incidentService';
 import { IncidentGisMap } from './IncidentGisMap';
 import { IncidentDetailModal } from './IncidentDetailModal';
 import { ALL_DISTRICTS } from '../data/indiaLocations';
@@ -31,6 +39,7 @@ import { buildEmergencyPriorityList } from '../services/emergencyPriorityService
 import { DistrictHeatmapPoint } from '../types/risk';
 import { EmergencyPriorityItem } from '../types/emergencyPriority';
 import { loadAllNerDistrictsProgressive } from '../services/nerRiskHeatmapService';
+import { getWorkflowStatusStyle } from '../utils/commandCenterTheme';
 
 const NER_STATES = [
   'All States',
@@ -70,10 +79,12 @@ const STATUS_OPTIONS: { label: string; value: string }[] = [
 ];
 
 export const IncidentMonitoringConsole: React.FC = () => {
+  const { t } = useTranslation();
   const [incidents, setIncidents] = useState<IncidentReportItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
 
   // Selected incident for detail view modal
   const [selectedIncident, setSelectedIncident] = useState<IncidentReportItem | null>(null);
@@ -90,6 +101,7 @@ export const IncidentMonitoringConsole: React.FC = () => {
   const [selectedDistrict, setSelectedDistrict] = useState<string>('All Districts');
   const [dateFilter, setDateFilter] = useState<'ALL' | 'TODAY' | '7DAYS' | '30DAYS'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showFiltersMobile, setShowFiltersMobile] = useState<boolean>(false);
 
   // Available districts based on selected state
   const availableDistricts = useMemo(() => {
@@ -104,14 +116,15 @@ export const IncidentMonitoringConsole: React.FC = () => {
   const loadIncidents = useCallback(async (isSilent = false) => {
     if (!isSilent) setIsLoading(true);
     else setIsRefreshing(true);
-    setErrorMessage(null);
 
     try {
       const data = await fetchIncidents({ limit: 200 });
       setIncidents(data);
+      setErrorMessage(null);
+      setLastSyncTime(new Date());
     } catch (err: any) {
-      console.error('Failed to load incident reports from backend:', err);
-      setErrorMessage(err.message || 'Failed to load live incident reports from MongoDB.');
+      console.warn('Incident load notice:', err.message);
+      setErrorMessage(err.message || 'Database is currently unavailable. Failed to load incident reports from MongoDB.');
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -157,7 +170,6 @@ export const IncidentMonitoringConsole: React.FC = () => {
   // Handle status update
   const handleUpdateStatus = async (reportId: string, newStatus: IncidentStatus) => {
     await updateIncidentStatus(reportId, newStatus);
-    // Update locally in state
     setIncidents((prev) =>
       prev.map((item) =>
         item.reportId === reportId
@@ -165,10 +177,19 @@ export const IncidentMonitoringConsole: React.FC = () => {
           : item
       )
     );
-    // Update selected incident if open
     setSelectedIncident((prev) =>
       prev && prev.reportId === reportId ? { ...prev, status: newStatus } : prev
     );
+  };
+
+  // Handle delete incident directly from MongoDB
+  const handleDeleteIncident = async (reportId: string) => {
+    await deleteIncident(reportId);
+    setIncidents((prev) => prev.filter((item) => item.reportId !== reportId));
+    if (selectedIncident?.reportId === reportId) {
+      setSelectedIncident(null);
+      setIsDetailModalOpen(false);
+    }
   };
 
   // Open Details Modal for an incident
@@ -180,14 +201,12 @@ export const IncidentMonitoringConsole: React.FC = () => {
   // Filter Logic
   const filteredIncidents = useMemo(() => {
     return incidents.filter((inc) => {
-      // 1. Type filter
       if (selectedType !== 'All Types') {
         if ((inc.incidentType || '').toLowerCase() !== selectedType.toLowerCase()) {
           return false;
         }
       }
 
-      // 2. Status filter
       if (selectedStatus !== 'ALL') {
         const normIncStatus = (inc.status || '').toUpperCase().replace(/_/g, ' ');
         const normFilterStatus = selectedStatus.toUpperCase().replace(/_/g, ' ');
@@ -196,7 +215,6 @@ export const IncidentMonitoringConsole: React.FC = () => {
         }
       }
 
-      // 3. State filter
       if (selectedState !== 'All States') {
         const loc = (inc.locationName || '').toLowerCase();
         if (!loc.includes(selectedState.toLowerCase())) {
@@ -204,7 +222,6 @@ export const IncidentMonitoringConsole: React.FC = () => {
         }
       }
 
-      // 4. District filter
       if (selectedDistrict !== 'All Districts') {
         const loc = (inc.locationName || '').toLowerCase();
         if (!loc.includes(selectedDistrict.toLowerCase())) {
@@ -212,7 +229,6 @@ export const IncidentMonitoringConsole: React.FC = () => {
         }
       }
 
-      // 5. Date filter
       if (dateFilter !== 'ALL') {
         const incDate = new Date(inc.submittedAt || inc.createdAt || 0).getTime();
         const now = Date.now();
@@ -228,7 +244,6 @@ export const IncidentMonitoringConsole: React.FC = () => {
         }
       }
 
-      // 6. Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesId = (inc.reportId || '').toLowerCase().includes(q);
@@ -246,6 +261,9 @@ export const IncidentMonitoringConsole: React.FC = () => {
 
   // Summary Metrics Counts
   const metrics = useMemo(() => {
+    if (errorMessage) {
+      return { total: '-', submitted: '-', underReview: '-', verified: '-', resolved: '-' };
+    }
     const total = incidents.length;
     let submitted = 0;
     let underReview = 0;
@@ -261,7 +279,7 @@ export const IncidentMonitoringConsole: React.FC = () => {
     });
 
     return { total, submitted, underReview, verified, resolved };
-  }, [incidents]);
+  }, [incidents, errorMessage]);
 
   const handleResetFilters = () => {
     setSelectedType('All Types');
@@ -272,171 +290,182 @@ export const IncidentMonitoringConsole: React.FC = () => {
     setSearchQuery('');
   };
 
-  const getStatusBadge = (status: string) => {
-    const s = (status || '').toUpperCase().replace(/_/g, ' ');
-    switch (s) {
-      case 'RESOLVED':
-        return (
-          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-            RESOLVED
-          </span>
-        );
-      case 'VERIFIED':
-        return (
-          <span className="inline-flex items-center gap-1 bg-purple-50 text-purple-800 border border-purple-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
-            <ShieldCheck className="w-3 h-3 text-purple-600" />
-            VERIFIED
-          </span>
-        );
-      case 'UNDER REVIEW':
-        return (
-          <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-800 border border-blue-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
-            <Hourglass className="w-3 h-3 text-blue-600" />
-            UNDER REVIEW
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
-            <AlertTriangle className="w-3 h-3 text-amber-600" />
-            SUBMITTED
-          </span>
-        );
-    }
-  };
+  const hasActiveFilters =
+    selectedType !== 'All Types' ||
+    selectedStatus !== 'ALL' ||
+    selectedState !== 'All States' ||
+    selectedDistrict !== 'All Districts' ||
+    dateFilter !== 'ALL' ||
+    searchQuery.trim() !== '';
 
   return (
     <div id="incident-monitoring-console" className="space-y-4">
-      {/* 1. Header & Controls Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-slate-900 text-white rounded-lg">
-              <Shield className="w-5 h-5 text-blue-400" />
-            </div>
+      {/* 1. Tactical Command Header & Live Status */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+        className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs relative overflow-hidden"
+      >
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <img
+              src={WEBSITE_LOGO_URL}
+              alt="NER-SAFE Mountain Silhouette Logo"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.endsWith('/nersafe-symbol.png')) {
+                  target.src = '/nersafe-symbol.png';
+                }
+              }}
+              className="w-11 h-11 sm:w-12 sm:h-12 object-contain shrink-0 rounded-xl bg-white border border-slate-200 p-1 mt-0.5 sm:mt-0 shadow-xs"
+            />
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-                  Authority Incident Monitoring Console
-                </h2>
-                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  LIVE MONGODB FEED
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
+                  {t('incidentMonitor.title', 'Authority Incident Monitor')}
+                </h1>
+                <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                  {t('incidentMonitor.liveFeedBadge', 'Live Incident Feed')}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Real-time disaster reports, GPS verification, field evidence, and status workflow dispatch
+              <p className="text-xs text-slate-500 mt-0.5 max-w-2xl leading-relaxed">
+                {t('incidentMonitor.subtitle', 'Operational disaster reports, GPS verification, multimedia evidence review, and emergency triage dispatch.')}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-center">
             <button
               onClick={() => loadIncidents(false)}
               disabled={isLoading || isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg border border-slate-200 transition-colors cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold rounded-xl border border-slate-200 shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing || isLoading ? 'animate-spin text-blue-600' : ''}`} />
-              <span>{isRefreshing || isLoading ? 'Fetching...' : 'Refresh Records'}</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing || isLoading ? 'animate-spin text-sky-600' : 'text-slate-500'}`} />
+              <span>{isRefreshing || isLoading ? t('common.refreshing', 'Refreshing...') : t('incidentMonitor.refreshBtn', 'Refresh Incidents')}</span>
             </button>
           </div>
         </div>
 
-        {/* 2. Metrics Counter Ribbon */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-3">
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-              Total Incidents
+        {/* Tactical Metrics Counter Ribbon */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-4 mt-4 border-t border-sky-100/90">
+          <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-2xs">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-0.5">
+              {t('incidentMonitor.totalReports', 'Total Reports')}
             </span>
-            <span className="text-lg font-black text-slate-900">{metrics.total}</span>
+            <span className="text-2xl font-black text-slate-900">{metrics.total}</span>
           </div>
-          <div className="bg-amber-50/70 border border-amber-200 rounded-lg p-2.5 text-center">
-            <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">
-              Submitted
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center relative">
+            {metrics.submitted > 0 && (
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            )}
+            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block mb-0.5">
+              {t('incidentMonitor.submittedPending', 'Submitted (Pending)')}
             </span>
-            <span className="text-lg font-black text-amber-800">{metrics.submitted}</span>
+            <span className="text-2xl font-black text-amber-900">{metrics.submitted}</span>
           </div>
-          <div className="bg-blue-50/70 border border-blue-200 rounded-lg p-2.5 text-center">
-            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">
-              Under Review
+
+          <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 text-center">
+            <span className="text-[10px] font-bold text-sky-800 uppercase tracking-wider block mb-0.5">
+              {t('incidentMonitor.underReview', 'Under Review')}
             </span>
-            <span className="text-lg font-black text-blue-800">{metrics.underReview}</span>
+            <span className="text-2xl font-black text-sky-900">{metrics.underReview}</span>
           </div>
-          <div className="bg-purple-50/70 border border-purple-200 rounded-lg p-2.5 text-center">
-            <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider block">
-              Verified
+
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-center">
+            <span className="text-[10px] font-bold text-purple-800 uppercase tracking-wider block mb-0.5">
+              {t('incidentMonitor.verified', 'Verified')}
             </span>
-            <span className="text-lg font-black text-purple-800">{metrics.verified}</span>
+            <span className="text-2xl font-black text-purple-900">{metrics.verified}</span>
           </div>
-          <div className="bg-emerald-50/70 border border-emerald-200 rounded-lg p-2.5 text-center col-span-2 sm:col-span-1">
-            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
-              Resolved
+
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center col-span-2 sm:col-span-1">
+            <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-0.5">
+              {t('incidentMonitor.resolved', 'Resolved')}
             </span>
-            <span className="text-lg font-black text-emerald-800">{metrics.resolved}</span>
+            <span className="text-2xl font-black text-emerald-900">{metrics.resolved}</span>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* 3. Filter Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-3">
+      {/* 2. Tactical Filter & Query Toolbar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-            <Filter className="w-3.5 h-3.5 text-blue-600" />
-            <span>Filter Incident Records</span>
-            <span className="text-slate-400 font-normal text-[11px]">
-              ({filteredIncidents.length} matching of {incidents.length})
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-sky-700" />
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              {t('incidentMonitor.filterTitle', 'Filter Operational Records')}
+            </h3>
+            <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+              {filteredIncidents.length} {t('incidentMonitor.ofCount', 'of')} {incidents.length} {t('incidentMonitor.shown', 'shown')}
             </span>
           </div>
-          <button
-            onClick={handleResetFilters}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>Reset Filters</span>
-          </button>
+
+          <div className="flex items-center gap-2">
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>{t('incidentMonitor.resetFilters', 'Reset Filters')}</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setShowFiltersMobile(!showFiltersMobile)}
+              className="sm:hidden p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg cursor-pointer"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 text-xs">
-          {/* Filter: Incident Type */}
+        {/* Filter Dropdowns Grid */}
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 text-xs ${showFiltersMobile ? 'block' : 'hidden sm:grid'}`}>
+          {/* Incident Type */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
-              Incident Type
+              {t('incidentMonitor.hazardType', 'Hazard Type')}
             </label>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-hidden cursor-pointer"
             >
-              {INCIDENT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              {INCIDENT_TYPES.map((tItem) => (
+                <option key={tItem} value={tItem}>
+                  {tItem === 'All Types' ? t('incidentMonitor.allTypes', 'All Types') : tItem}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Filter: Status */}
+          {/* Workflow Status */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
-              Workflow Status
+              {t('incidentMonitor.workflowStatus', 'Workflow Status')}
             </label>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-hidden cursor-pointer"
             >
               {STATUS_OPTIONS.map((st) => (
                 <option key={st.value} value={st.value}>
-                  {st.label}
+                  {st.value === 'ALL' ? t('incidentMonitor.allStatuses', 'All Statuses') : st.label}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Filter: State */}
+          {/* State */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
-              State
+              {t('incidentMonitor.stateJurisdiction', 'State Jurisdiction')}
             </label>
             <select
               value={selectedState}
@@ -444,66 +473,74 @@ export const IncidentMonitoringConsole: React.FC = () => {
                 setSelectedState(e.target.value);
                 setSelectedDistrict('All Districts');
               }}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-hidden cursor-pointer"
             >
               {NER_STATES.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {s === 'All States' ? t('incidentMonitor.allStates', 'All States') : s}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Filter: District */}
+          {/* District */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
-              District
+              {t('location.district', 'District')}
             </label>
             <select
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-hidden cursor-pointer"
             >
               {availableDistricts.map((d) => (
                 <option key={d} value={d}>
-                  {d}
+                  {d === 'All Districts' ? t('incidentMonitor.allDistricts', 'All Districts') : d}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Filter: Date Range */}
+          {/* Date Range */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
-              Date Range
+              {t('incidentMonitor.timeWindow', 'Time Window')}
             </label>
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value as any)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-hidden cursor-pointer"
             >
-              <option value="ALL">All Time</option>
-              <option value="TODAY">Last 24 Hours</option>
-              <option value="7DAYS">Last 7 Days</option>
-              <option value="30DAYS">Last 30 Days</option>
+              <option value="ALL">{t('incidentMonitor.allTime', 'All Time')}</option>
+              <option value="TODAY">{t('incidentMonitor.last24Hours', 'Last 24 Hours')}</option>
+              <option value="7DAYS">{t('incidentMonitor.last7Days', 'Last 7 Days')}</option>
+              <option value="30DAYS">{t('incidentMonitor.last30Days', 'Last 30 Days')}</option>
             </select>
           </div>
         </div>
 
-        {/* Search Input */}
+        {/* Full-Text Query Search Bar */}
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by Report ID, Location, Description, or Keywords..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            placeholder={t('incidentMonitor.searchPlaceholder', 'Search by Report ID (NER-INC-...), District, Keyword, or Narrative Description...')}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-sky-500 focus:outline-hidden"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-2.5 p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 4. Emergency Response Priority Section */}
+      {/* 3. Priority Response Matrix */}
       <EmergencyResponsePrioritySection
         priorityItems={prioritySummary.items}
         selectedItem={selectedPriorityItem}
@@ -520,17 +557,17 @@ export const IncidentMonitoringConsole: React.FC = () => {
         allDistricts={allDistrictNames}
       />
 
-      {/* 5. GIS Map Section */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+      {/* 4. GIS Geospatial Priority & Incident Map Section */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-blue-600" />
+            <MapPin className="w-4 h-4 text-sky-700" />
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              GIS Geospatial Priority & Incident Distribution
+              {t('incidentMonitor.gisSectionTitle', 'GIS Operational Spatial Distribution')}
             </h3>
           </div>
-          <span className="text-[11px] text-slate-500 font-medium">
-            {prioritySummary.items.length} prioritized target{prioritySummary.items.length === 1 ? '' : 's'} · {filteredIncidents.length} raw incident{filteredIncidents.length === 1 ? '' : 's'}
+          <span className="text-[11px] text-slate-500 font-bold">
+            {prioritySummary.items.length} {t('incidentMonitor.prioritizedTargets', 'prioritized target(s)')} · {filteredIncidents.length} {t('incidentMonitor.rawIncidents', 'raw incident(s)')}
           </span>
         </div>
 
@@ -552,38 +589,43 @@ export const IncidentMonitoringConsole: React.FC = () => {
         />
       </div>
 
-      {/* 6. Incidents List & Data Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
-        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-          <div className="flex items-center gap-2">
+      {/* 5. Dense Operational Incidents Table & List */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+          <div className="flex items-center gap-2.5">
             <FileText className="w-4 h-4 text-slate-700" />
-            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-              Incident Incident Registry ({filteredIncidents.length})
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              {t('incidentMonitor.registryFeed', 'Incident Registry Feed')} ({filteredIncidents.length})
             </h3>
           </div>
-          <span className="text-[11px] text-slate-500">
-            Click any row to review details and change workflow status
+          <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+            {t('incidentMonitor.registryHint', 'Select any record to view evidence or advance triage status')}
           </span>
         </div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="py-12 text-center flex flex-col items-center justify-center">
-            <Loader2 className="w-6 h-6 text-blue-600 animate-spin mb-2" />
-            <p className="text-xs font-bold text-slate-700">Loading Incident Reports from Database...</p>
+          <div className="py-16 text-center flex flex-col items-center justify-center">
+            <Loader2 className="w-8 h-8 text-sky-600 animate-spin mb-3" />
+            <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+              {t('incidentMonitor.readingMongo', 'Reading Incidents from MongoDB Atlas...')}
+            </p>
           </div>
         )}
 
         {/* Error State */}
         {!isLoading && errorMessage && (
           <div className="p-6 text-center text-rose-800 bg-rose-50 m-4 rounded-xl border border-rose-200">
-            <AlertTriangle className="w-6 h-6 text-rose-600 mx-auto mb-2" />
-            <p className="text-xs font-bold">{errorMessage}</p>
+            <AlertTriangle className="w-7 h-7 text-rose-600 mx-auto mb-2" />
+            <h4 className="text-sm font-bold text-rose-900 uppercase tracking-wider mb-1">
+              {t('incidentMonitor.unableToFetch', 'Unable to fetch live data.')}
+            </h4>
+            <p className="text-xs font-medium text-rose-700 max-w-md mx-auto">{errorMessage}</p>
             <button
               onClick={() => loadIncidents(false)}
-              className="mt-3 px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-bold"
+              className="mt-3 px-4 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer hover:bg-rose-700 transition-colors"
             >
-              Retry Connection
+              {t('incidentMonitor.retryConnection', 'Retry Connection')}
             </button>
           </div>
         )}
@@ -591,19 +633,21 @@ export const IncidentMonitoringConsole: React.FC = () => {
         {/* Empty State */}
         {!isLoading && !errorMessage && filteredIncidents.length === 0 && (
           <div className="py-16 text-center px-4">
-            <Shield className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <h4 className="text-sm font-bold text-slate-800">No Incidents Found</h4>
+            <Shield className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+              {t('incidentMonitor.noLiveData', 'No live data available.')}
+            </h4>
             <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
               {incidents.length === 0
-                ? 'No incident reports have been submitted to the database yet.'
-                : 'No incidents match the active filter criteria. Try adjusting or resetting the filters.'}
+                ? t('incidentMonitor.noMongoRecords', 'No live incident records found in MongoDB.')
+                : t('incidentMonitor.noMatchCriteria', 'No incidents match the active filter criteria. Adjust your search or reset the filters.')}
             </p>
             {incidents.length > 0 && (
               <button
                 onClick={handleResetFilters}
-                className="mt-3 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
               >
-                Clear All Filters
+                {t('incidentMonitor.clearAllFilters', 'Clear All Filters')}
               </button>
             )}
           </div>
@@ -613,15 +657,15 @@ export const IncidentMonitoringConsole: React.FC = () => {
         {!isLoading && !errorMessage && filteredIncidents.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100/75 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+              <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="py-2.5 px-4">Report ID</th>
-                  <th className="py-2.5 px-4">Incident Type</th>
-                  <th className="py-2.5 px-4">Location / GPS</th>
-                  <th className="py-2.5 px-4">Reported At</th>
-                  <th className="py-2.5 px-4">Evidence</th>
-                  <th className="py-2.5 px-4">Status</th>
-                  <th className="py-2.5 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4">{t('incidentMonitor.thReportId', 'Report ID')}</th>
+                  <th className="py-3 px-4">{t('incidentMonitor.thClassification', 'Classification')}</th>
+                  <th className="py-3 px-4">{t('incidentMonitor.thLocation', 'Location / Coordinates')}</th>
+                  <th className="py-3 px-4">{t('incidentMonitor.thReported', 'Reported')}</th>
+                  <th className="py-3 px-4">{t('incidentMonitor.thEvidence', 'Evidence')}</th>
+                  <th className="py-3 px-4">{t('incidentMonitor.thStatus', 'Workflow Status')}</th>
+                  <th className="py-3 px-4 text-right">{t('incidentMonitor.thAction', 'Operational Action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -629,31 +673,32 @@ export const IncidentMonitoringConsole: React.FC = () => {
                   const hasPhoto = inc.photoUrls && inc.photoUrls.length > 0;
                   const hasVideo = Boolean(inc.videoUrl);
                   const isSelected = selectedIncident?.reportId === inc.reportId;
+                  const statusStyle = getWorkflowStatusStyle(inc.status);
 
                   return (
                     <tr
                       key={inc.reportId}
                       onClick={() => handleOpenDetails(inc)}
-                      className={`hover:bg-blue-50/50 transition-colors cursor-pointer ${
-                        isSelected ? 'bg-blue-50/80 font-medium' : ''
+                      className={`hover:bg-sky-50/60 transition-colors cursor-pointer ${
+                        isSelected ? 'bg-sky-50/80' : ''
                       }`}
                     >
                       {/* Report ID */}
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
                         {inc.reportId}
                       </td>
 
                       {/* Incident Type */}
-                      <td className="py-3 px-4">
-                        <span className="inline-block bg-slate-100 text-slate-800 font-semibold px-2 py-0.5 rounded text-[11px]">
+                      <td className="py-3.5 px-4">
+                        <span className="inline-block bg-slate-100 text-slate-800 font-bold px-2 py-0.5 rounded text-[11px]">
                           {inc.incidentType}
                         </span>
                       </td>
 
                       {/* Location */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="font-bold text-slate-900 line-clamp-1">
-                          {inc.locationName || 'GPS Location'}
+                          {inc.locationName || t('incidentMonitor.geolocatedPoint', 'Geolocated Point')}
                         </div>
                         <div className="text-[10px] font-mono text-slate-500">
                           {inc.latitude.toFixed(4)}°N, {inc.longitude.toFixed(4)}°E
@@ -661,15 +706,14 @@ export const IncidentMonitoringConsole: React.FC = () => {
                       </td>
 
                       {/* Date / Time */}
-                      <td className="py-3 px-4 text-slate-600">
-                        <div className="font-medium text-slate-800">
+                      <td className="py-3.5 px-4 text-slate-600">
+                        <div className="font-bold text-slate-800">
                           {new Date(inc.submittedAt).toLocaleDateString('en-IN', {
                             day: 'numeric',
                             month: 'short',
-                            year: 'numeric',
                           })}
                         </div>
-                        <div className="text-[10px] text-slate-400">
+                        <div className="text-[10px]">
                           {new Date(inc.submittedAt).toLocaleTimeString('en-IN', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -678,48 +722,53 @@ export const IncidentMonitoringConsole: React.FC = () => {
                       </td>
 
                       {/* Evidence Indicators */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="flex items-center gap-1.5">
                           {hasPhoto && (
                             <span
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-semibold"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-sky-50 text-sky-800 border border-sky-200 rounded text-[10px] font-bold"
                               title={`${inc.photoUrls.length} photo(s)`}
                             >
-                              <Camera className="w-3 h-3" />
+                              <Camera className="w-3 h-3 text-sky-700" />
                               <span>{inc.photoUrls.length}</span>
                             </span>
                           )}
                           {hasVideo && (
                             <span
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded text-[10px] font-semibold"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 text-rose-800 border border-rose-200 rounded text-[10px] font-bold"
                               title="Video attached"
                             >
-                              <Video className="w-3 h-3" />
+                              <Video className="w-3 h-3 text-rose-600" />
                               <span>1</span>
                             </span>
                           )}
                           {!hasPhoto && !hasVideo && (
-                            <span className="text-[10px] text-slate-400 italic">None</span>
+                            <span className="text-[10px] text-slate-400 italic">{t('incidentMonitor.none', 'None')}</span>
                           )}
                         </div>
                       </td>
 
-                      {/* Status */}
-                      <td className="py-3 px-4">
-                        {getStatusBadge(inc.status)}
+                      {/* Status Badge */}
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${statusStyle.badgeBg} ${statusStyle.badgeText} ${statusStyle.badgeBorder}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dotBg}`} />
+                          {statusStyle.label}
+                        </span>
                       </td>
 
                       {/* Action */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOpenDetails(inc);
                           }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-blue-600 hover:text-white rounded-md text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-sky-50 hover:bg-sky-600 hover:text-white rounded-lg text-xs font-bold text-sky-900 border border-sky-200/80 transition-colors cursor-pointer"
                         >
-                          <span>Review</span>
+                          <span>{t('incidentMonitor.reviewBtn', 'Review')}</span>
                           <ChevronRight className="w-3 h-3" />
                         </button>
                       </td>
@@ -738,9 +787,7 @@ export const IncidentMonitoringConsole: React.FC = () => {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         onUpdateStatus={handleUpdateStatus}
-        onCenterOnMap={(lat, lon) => {
-          // Centering handled by GIS map component
-        }}
+        onDeleteIncident={handleDeleteIncident}
       />
     </div>
   );

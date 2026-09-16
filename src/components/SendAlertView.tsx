@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import {
   AlertTriangle,
@@ -31,9 +32,16 @@ import {
   Check,
   ExternalLink,
   QrCode,
+  Languages,
+  Globe,
 } from 'lucide-react';
 import { LocationItem, WeatherResponse } from '../types/weather';
 import { INDIA_STATES_DATA, ALL_DISTRICTS, NER_STATES } from '../data/indiaLocations';
+import {
+  SUPPORTED_LANGUAGES,
+  getDefaultLanguageCodeForState,
+  getLanguageOptionByCode,
+} from '../data/languageOptions';
 import { calculateMultiFactorLandslideRisk } from '../services/riskEngine';
 import { fetchDistrictWeather } from '../services/weatherService';
 import { fetchDistrictEnvironmentalProfile } from '../services/environmentalService';
@@ -47,6 +55,7 @@ interface VerifiedUserRecipient {
   name?: string;
   state?: string;
   district?: string;
+  preferredLanguage?: string;
   isVerified: boolean;
   emailVerified?: boolean;
   phoneVerified?: boolean;
@@ -61,6 +70,11 @@ interface DeliveryResult {
   name?: string;
   district?: string;
   state?: string;
+  language?: string;
+  languageName?: string;
+  nativeLanguageName?: string;
+  isFallbackEnglish?: boolean;
+  smsMessageText?: string;
   emailStatus: 'SENT' | 'FAILED' | 'SKIPPED';
   emailMessageId?: string;
   emailError?: string;
@@ -92,6 +106,7 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
   weatherData: propWeatherData,
   onNavigateToAccount,
 }) => {
+  const { t } = useTranslation();
   // Location selection
   const [selectedState, setSelectedState] = useState<string>(
     initialLocation?.state || 'Assam'
@@ -200,21 +215,36 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
     ].join('\n');
   };
 
-  // Construct sms: URI with selected phone numbers and encoded message body
+  // Construct a cross-platform valid encoded sms: URI with verified phone numbers from MongoDB
   const buildSmsUri = (phoneNumbers: string[], body: string) => {
-    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isIOS =
+      typeof navigator !== 'undefined' &&
+      (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+    const formattedNumbers = phoneNumbers
+      .map((p) => {
+        const digits = p.replace(/\D/g, '');
+        if (!digits) return '';
+        if (digits.length === 10) return `+91${digits}`;
+        if (p.trim().startsWith('+')) return `+${digits}`;
+        return `+${digits}`;
+      })
+      .filter(Boolean);
+
     const separator = isIOS ? ';' : ',';
-    const bodyPrefix = isIOS ? '&body=' : '?body=';
+    const recipientsStr = formattedNumbers.join(separator);
+    const encodedBody = encodeURIComponent(body);
 
-    const formatted = phoneNumbers.map((p) => {
-      const digits = p.replace(/\D/g, '');
-      if (digits.length === 10) return `+91${digits}`;
-      if (p.startsWith('+')) return p;
-      return `+${digits}`;
-    });
+    if (isIOS) {
+      return recipientsStr
+        ? `sms:${recipientsStr}&body=${encodedBody}`
+        : `sms:&body=${encodedBody}`;
+    }
 
-    const recipientsStr = formatted.join(separator);
-    return `sms:${recipientsStr}${bodyPrefix}${encodeURIComponent(body)}`;
+    return recipientsStr
+      ? `sms:${recipientsStr}?body=${encodedBody}`
+      : `sms:?body=${encodedBody}`;
   };
 
   // Send Alert Button Text: strictly "Send via My Phone" when SMS is active
@@ -603,62 +633,76 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
 
       const isMobile = checkIsMobileDevice();
 
-      // 1. If Email channel is active, dispatch official email via Brevo
-      let backendData: any = null;
-      try {
-        const { ok, data } = await safeFetchJson<any>('/api/alerts/send-demo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            recipients: selectedUsersData.map((u) => ({
-              email: u.email,
-              phone: (u.phone || u.phoneNumber || '').trim(),
-              phoneNumber: (u.phoneNumber || u.phone || '').trim(),
-              name: u.name,
-              district: u.district,
-              state: u.state,
-              emailVerified: u.emailVerified ?? u.isVerified,
-              phoneVerified: Boolean(u.phoneVerified),
-            })),
-            alertSeverity,
-            state: selectedState,
-            district: selectedDistrictName,
-            riskLevel,
-            riskScore,
-            alertMessage,
-            recommendedAction,
-            channels: {
-              email: channelEmail,
-              sms: channelSms,
-            },
-          }),
-        });
-        if (ok && data) {
-          backendData = data;
+      // 1. If SMS channel is active: IMMEDIATELY launch native SMS/Messages app
+      // CRITICAL: MUST execute synchronously within the user's direct tap/click gesture
+      // BEFORE any asynchronous network operations, so mobile Safari, Chrome, and native OS handlers do not block it!
+      if (channelSms && verifiedPhones.length > 0) {
+        // Direct navigation triggers the native Messages app on mobile browsers
+        try {
+          window.location.href = smsUri;
+        } catch (navErr) {
+          console.warn('[SMS] Direct window.location.href notice:', navErr);
         }
-      } catch (backendErr: any) {
-        console.warn('Backend send-demo dispatch error:', backendErr);
+
+        // Programmatic click without _top as a reliable backup
+        try {
+          const directLink = document.createElement('a');
+          directLink.href = smsUri;
+          directLink.rel = 'noopener noreferrer';
+          document.body.appendChild(directLink);
+          directLink.click();
+          setTimeout(() => {
+            if (document.body.contains(directLink)) {
+              document.body.removeChild(directLink);
+            }
+          }, 400);
+        } catch (linkErr) {
+          console.warn('[SMS] Programmatic link click notice:', linkErr);
+        }
+
+        // Desktop browser helper: explain that SMS is prepared for mobile devices
+        if (!isMobile) {
+          setShowDesktopSmsModal(true);
+        }
       }
 
-      // 2. If SMS channel is active:
-      // Mobile: Open native SMS app with prefilled recipients and warning message
-      // Desktop: Show desktop guidance modal explaining to open on mobile
-      if (channelSms) {
-        if (isMobile) {
-          // Trigger native SMS application on mobile phone
-          const link = document.createElement('a');
-          link.href = smsUri;
-          link.target = '_top';
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => {
-            if (document.body.contains(link)) {
-              document.body.removeChild(link);
-            }
-          }, 300);
-        } else {
-          // Desktop browser: display guidance modal explaining to open on mobile phone
-          setShowDesktopSmsModal(true);
+      // 2. If Email channel is active, dispatch official email via Brevo
+      let backendData: any = null;
+      if (channelEmail) {
+        try {
+          const { ok, data } = await safeFetchJson<any>('/api/alerts/send-demo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipients: selectedUsersData.map((u) => ({
+                email: u.email,
+                phone: (u.phone || u.phoneNumber || '').trim(),
+                phoneNumber: (u.phoneNumber || u.phone || '').trim(),
+                name: u.name,
+                district: u.district,
+                state: u.state,
+                preferredLanguage: u.preferredLanguage,
+                emailVerified: u.emailVerified ?? u.isVerified,
+                phoneVerified: Boolean(u.phoneVerified),
+              })),
+              alertSeverity,
+              state: selectedState,
+              district: selectedDistrictName,
+              riskLevel,
+              riskScore,
+              alertMessage,
+              recommendedAction,
+              channels: {
+                email: channelEmail,
+                sms: channelSms,
+              },
+            }),
+          });
+          if (ok && data) {
+            backendData = data;
+          }
+        } catch (backendErr: any) {
+          console.warn('Backend send-demo dispatch error:', backendErr);
         }
       }
 
@@ -714,28 +758,28 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* 1. TOP MANDATORY DEMO TESTING BANNER */}
-      <div className="bg-amber-500/10 border-2 border-amber-500/40 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div className="bg-white rounded-xl border border-amber-300 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
         <div className="flex items-start gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-900 border border-amber-500/30 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-900 border border-amber-500/30 flex items-center justify-center shrink-0">
             <AlertTriangle className="w-5 h-5 text-amber-700" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-base font-extrabold text-amber-950 uppercase tracking-tight">
-                DEMO — ALERT TESTING
+                {t('alerts.demoBannerTitle', 'DEMO — ALERT TESTING')}
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-amber-200 text-amber-900 border border-amber-300">
-                SIH26001 PROTOCOL VERIFICATION
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-amber-200 text-amber-900 border border-amber-300 font-mono">
+                SIH26001 {t('alerts.protocolVerification', 'PROTOCOL VERIFICATION')}
               </span>
             </div>
             <p className="text-xs font-semibold text-amber-900 mt-1 italic">
-              "This is a prototype test. No real emergency is being declared."
+              "{t('alerts.demoBannerSubtitle', 'This is a prototype test. No real emergency is being declared.')}"
             </p>
           </div>
         </div>
 
-        <div className="text-[11px] text-amber-800/90 font-medium bg-amber-100/80 px-3 py-2 rounded-xl border border-amber-200 shrink-0">
-          Authority Workflow: <strong>Risk Monitor &rarr; Authority Selection &rarr; Recipient Delivery &rarr; Live Log</strong>
+        <div className="text-[11px] text-amber-800/90 font-medium bg-amber-100/80 px-3.5 py-2 rounded-xl border border-amber-200 shrink-0">
+          {t('alerts.authorityWorkflow', 'Authority Workflow: Risk Monitor → Authority Selection → Recipient Delivery → Live Log')}
         </div>
       </div>
 
@@ -743,22 +787,24 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT COLUMN: ALERT COMPOSER (lg:col-span-7) */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Radio className="w-5 h-5 text-slate-800" />
+          <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-2xs space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-slate-900 text-white">
+                  <Radio className="w-4 h-4" />
+                </div>
                 <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-                  Alert Composer
+                  {t('alerts.composerTitle', 'Alert Composer')}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={handleSyncRealRiskData}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                title="Populate risk data automatically from Risk Monitor multi-factor engine"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer btn-press"
+                title={t('alerts.syncRiskTooltip', 'Populate risk data automatically from Risk Monitor multi-factor engine')}
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span>Sync Risk Monitor Data</span>
+                <span>{t('alerts.syncRiskData', 'Sync Risk Monitor Data')}</span>
               </button>
             </div>
 
@@ -766,7 +812,7 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Target State (NER)
+                  {t('alerts.targetState', 'Target State (NER)')}
                 </label>
                 <select
                   value={selectedState}
@@ -790,7 +836,7 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Target District
+                  {t('alerts.targetDistrict', 'Target District')}
                 </label>
                 <select
                   value={selectedDistrictName}
@@ -810,24 +856,24 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Alert Severity
+                  {t('alerts.severity', 'Alert Severity')}
                 </label>
                 <select
                   value={alertSeverity}
                   onChange={(e) => setAlertSeverity(e.target.value as any)}
                   className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900"
                 >
-                  <option value="ADVISORY">ADVISORY (Blue)</option>
-                  <option value="WATCH">WATCH (Yellow)</option>
-                  <option value="MODERATE">MODERATE (Amber)</option>
-                  <option value="HIGH">HIGH (Orange)</option>
-                  <option value="CRITICAL">CRITICAL (Red)</option>
+                  <option value="ADVISORY">{t('alerts.severityAdvisory', 'ADVISORY (Blue)')}</option>
+                  <option value="WATCH">{t('alerts.severityWatch', 'WATCH (Yellow)')}</option>
+                  <option value="MODERATE">{t('alerts.severityModerate', 'MODERATE (Amber)')}</option>
+                  <option value="HIGH">{t('alerts.severityHigh', 'HIGH (Orange)')}</option>
+                  <option value="CRITICAL">{t('alerts.severityCritical', 'CRITICAL (Red)')}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Risk Level
+                  {t('alerts.riskLevel', 'Risk Level')}
                 </label>
                 <select
                   value={riskLevel}
@@ -840,16 +886,16 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
                   }}
                   className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900"
                 >
-                  <option value="Low">Low</option>
-                  <option value="Moderate">Moderate</option>
-                  <option value="High">High</option>
-                  <option value="Severe">Severe</option>
+                  <option value="Low">{t('risk.low', 'Low')}</option>
+                  <option value="Moderate">{t('risk.moderate', 'Moderate')}</option>
+                  <option value="High">{t('risk.high', 'High')}</option>
+                  <option value="Severe">{t('risk.severe', 'Severe')}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Risk Score (0-100)
+                  {t('alerts.riskScore', 'Risk Score (0-100)')}
                 </label>
                 <input
                   type="number"
@@ -865,30 +911,30 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
             {/* Alert Message Textarea */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Demo Alert Message Body
+                {t('alerts.messageBody', 'Demo Alert Message Body')}
               </label>
               <textarea
                 rows={3}
                 value={alertMessage}
                 onChange={(e) => setAlertMessage(e.target.value)}
-                placeholder="Enter custom alert message"
+                placeholder={t('alerts.messagePlaceholder', 'Enter custom alert message')}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 leading-relaxed focus:bg-white focus:outline-none focus:border-slate-900 transition-colors resize-none"
               />
               <p className="text-[11px] text-slate-500 mt-1">
-                Prefilled with real location and estimated risk context. Clearly discloses prototype status.
+                {t('alerts.messageHelp', 'Prefilled with real location and estimated risk context. Clearly discloses prototype status.')}
               </p>
             </div>
 
             {/* Recommended Action */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Recommended Action for Residents
+                {t('alerts.recommendedAction', 'Recommended Action for Residents')}
               </label>
               <textarea
                 rows={2}
                 value={recommendedAction}
                 onChange={(e) => setRecommendedAction(e.target.value)}
-                placeholder="Enter safety instructions or evacuation guidance"
+                placeholder={t('alerts.actionPlaceholder', 'Enter safety instructions or evacuation guidance')}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 leading-relaxed focus:bg-white focus:outline-none focus:border-slate-900 transition-colors resize-none"
               />
             </div>
@@ -896,7 +942,7 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
             {/* Delivery Channels Toggle */}
             <div className="pt-2 border-t border-slate-100 space-y-3">
               <span className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Select Delivery Channels
+                {t('alerts.selectChannels', 'Select Delivery Channels')}
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Channel 1: Email (Brevo) */}
@@ -979,7 +1025,13 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
             <div className="pt-2 space-y-2">
               <button
                 type="button"
-                onClick={() => setShowConfirmModal(true)}
+                onClick={() => {
+                  if (channelSms && !channelEmail) {
+                    handleExecuteSend();
+                  } else {
+                    setShowConfirmModal(true);
+                  }
+                }}
                 disabled={isSending || !isFormValid}
                 className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -1002,6 +1054,29 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
                 )}
               </button>
 
+              {/* Instant Native SMS Launcher Banner */}
+              {channelSms && preparedSmsUri && (
+                <div className="p-3.5 bg-emerald-50 border-2 border-emerald-300 rounded-xl text-xs text-emerald-950 flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <span className="font-extrabold">SMS prepared on your phone.</span>
+                      <p className="text-[11px] text-emerald-800">
+                        Messages app prefilled with {preparedSmsRecipients.length} verified resident(s).
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    id="reopen-native-sms-button"
+                    href={preparedSmsUri}
+                    className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors shrink-0"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Open in Messages</span>
+                  </a>
+                </div>
+              )}
+
               {/* Validation helper status when disabled */}
               {!isFormValid && (
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-950 space-y-1">
@@ -1023,7 +1098,7 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
         {/* RIGHT COLUMN: MAP & MONGODB RECIPIENTS (lg:col-span-5) */}
         <div className="lg:col-span-5 space-y-6">
           {/* MAP CARD: DEMO ALERT LOCATION */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-slate-800" />
@@ -1031,7 +1106,7 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
                   Demo Alert Location
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-900 border border-amber-200">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-900 border border-amber-200 font-mono">
                 PROTOTYPE GIS
               </span>
             </div>
@@ -1041,7 +1116,7 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
               <div ref={mapContainerRef} className="w-full h-full" />
               
               {/* Map Floating Disclaimer Label */}
-              <div className="absolute top-2 left-2 right-2 z-[400] bg-slate-900/85 backdrop-blur-xs text-white p-2 rounded-lg text-[10px] border border-white/20 shadow-xs">
+              <div className="absolute top-2 left-2 right-2 z-[400] bg-slate-900/85 backdrop-blur-xs text-white p-2.5 rounded-xl text-[10px] border border-white/20 shadow-xs">
                 <div className="font-extrabold text-amber-300 uppercase tracking-wider flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
                   <span>DEMO ALERT LOCATION: {activeLocation.name}, {activeLocation.state}</span>
@@ -1052,14 +1127,14 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
               </div>
 
               {/* Coordinates Pill */}
-              <div className="absolute bottom-2 right-2 z-[400] bg-white/90 backdrop-blur-xs px-2 py-1 rounded text-[10px] font-mono text-slate-700 border border-slate-300 shadow-2xs">
+              <div className="absolute bottom-2 right-2 z-[400] bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-lg text-[10px] font-mono text-slate-700 border border-slate-300 shadow-2xs">
                 {activeLocation.latitude.toFixed(4)}° N, {activeLocation.longitude.toFixed(4)}° E
               </div>
             </div>
           </div>
 
           {/* VERIFIED RECIPIENTS SELECTION LIST (From MongoDB) */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-slate-800" />
@@ -1067,8 +1142,8 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Verified Recipients (MongoDB)
                   </h3>
-                  <span className="text-[11px] text-slate-500">
-                    {selectedRecipientEmails.length} of {recipients.length} selected
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    {selectedRecipientEmails.length} of {recipients.length} verified recipients selected
                   </span>
                 </div>
               </div>
@@ -1179,6 +1254,24 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
                                 No Phone
                               </span>
                             )}
+                            {/* Regional Alert Language Badge */}
+                            {(() => {
+                              const userLangCode = user.preferredLanguage || getDefaultLanguageCodeForState(user.state || 'Assam');
+                              const langOpt = getLanguageOptionByCode(userLangCode);
+                              return (
+                                <span
+                                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1 ${
+                                    isSelected
+                                      ? 'bg-sky-500/20 text-sky-200 border border-sky-400/30'
+                                      : 'bg-sky-50 text-sky-700 border border-sky-200'
+                                  }`}
+                                  title={`Alerts will automatically be translated into ${langOpt.name} (${langOpt.nativeName})`}
+                                >
+                                  <Globe className="w-2.5 h-2.5" />
+                                  <span>{langOpt.nativeName}</span>
+                                </span>
+                              );
+                            })()}
                           </div>
                           <div
                             className={`text-[11px] truncate font-mono ${
@@ -1217,7 +1310,7 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
 
       {/* 3. POST-SEND DELIVERY REPORT */}
       {deliverySummary && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-2xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
@@ -1262,12 +1355,33 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
             </div>
           </div>
 
+          {/* Direct CTA to launch/re-open SMS composer in Messages app */}
+          {channelSms && preparedSmsUri && (
+            <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5">
+                <Smartphone className="w-5 h-5 text-emerald-700 shrink-0" />
+                <div className="text-xs text-emerald-950 font-medium">
+                  <strong className="block text-emerald-900">SMS prepared on your phone.</strong>
+                  Prefilled for {preparedSmsRecipients.length} phone-verified resident(s). Review in Messages app and tap Send.
+                </div>
+              </div>
+              <a
+                id="summary-open-sms-button"
+                href={preparedSmsUri}
+                className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-colors shrink-0"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open Messages App</span>
+              </a>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                   <th className="pb-2 pl-1">Recipient</th>
-                  <th className="pb-2">Target District</th>
+                  <th className="pb-2">Location &amp; Alert Language</th>
                   <th className="pb-2">Email Delivery (Brevo)</th>
                   <th className="pb-2">SMS Status (My Phone &amp; SIM)</th>
                 </tr>
@@ -1283,7 +1397,15 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
                       </div>
                     </td>
                     <td className="py-3 text-slate-700">
-                      {result.district}, {result.state}
+                      <div>{result.district}, {result.state}</div>
+                      {result.languageName ? (
+                        <div className="inline-flex items-center gap-1 text-[10px] text-sky-700 font-semibold mt-0.5">
+                          <Globe className="w-2.5 h-2.5 shrink-0" />
+                          <span>
+                            {result.languageName} {result.nativeLanguageName ? `(${result.nativeLanguageName})` : ''}
+                          </span>
+                        </div>
+                      ) : null}
                     </td>
                     <td className="py-3">
                       {result.emailStatus === 'SENT' ? (
@@ -1393,8 +1515,13 @@ export const SendAlertView: React.FC<SendAlertViewProps> = ({
               </div>
               <div>
                 <strong>Delivery Channels:</strong>{' '}
-                {channelEmail && 'Brevo Email'} {channelEmail && channelSms && ' & '} {channelSms && 'SMS via My Phone (SIM)'}
+                {channelEmail && 'Brevo Email (with State Regional Advisory)'} {channelEmail && channelSms && ' & '} {channelSms && 'SMS via My Phone (SIM)'}
               </div>
+              {channelEmail && (
+                <div className="text-slate-600">
+                  <strong>Email Structure:</strong> Official English alert telemetry + Pre-recorded <em>Regional Advisory</em> paragraph matched to recipient's state (e.g. Assam &rarr; Assamese, Sikkim &rarr; Nepali).
+                </div>
+              )}
               {channelSms && (
                 <div>
                   <strong>SMS Sender:</strong> Personal Mobile Phone + Native Messages App

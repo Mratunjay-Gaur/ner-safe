@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldCheck,
   Mail,
@@ -22,8 +23,15 @@ import {
   Check,
   CheckCircle,
   Phone,
+  Languages,
+  Globe,
 } from 'lucide-react';
 import { INDIA_STATES_DATA, ALL_DISTRICTS, NER_STATES } from '../data/indiaLocations';
+import {
+  SUPPORTED_LANGUAGES,
+  getDefaultLanguageCodeForState,
+  getLanguageOptionByCode,
+} from '../data/languageOptions';
 import {
   UserProfileData,
   restoreSession,
@@ -50,6 +58,7 @@ interface ServiceStatus {
 }
 
 export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNavigateToRisk }) => {
+  const { t } = useTranslation();
   // Auth Mode: 'signin' (existing user) or 'signup' (new user)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
 
@@ -84,6 +93,10 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
   const [editPhone, setEditPhone] = useState<string>(() => getCachedProfile()?.phoneNumber || '');
   const [editState, setEditState] = useState<string>(() => getCachedProfile()?.state || 'Assam');
   const [editDistrict, setEditDistrict] = useState<string>(() => getCachedProfile()?.district || 'Kamrup Metropolitan');
+  const [editLanguage, setEditLanguage] = useState<string>(() => {
+    const cached = getCachedProfile();
+    return cached?.preferredLanguage || getDefaultLanguageCodeForState(cached?.state || 'Assam');
+  });
   const [isSavingProfile, setIsSavingProfile] = useState<boolean>(false);
 
   // Cooldown & Loading States
@@ -154,8 +167,10 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
         setVerifiedProfile(activeUser);
         setEditName(activeUser.name || '');
         setEditPhone(activeUser.phoneNumber || '');
-        setEditState(activeUser.state || 'Assam');
+        const st = activeUser.state || 'Assam';
+        setEditState(st);
         setEditDistrict(activeUser.district || 'Kamrup Metropolitan');
+        setEditLanguage(activeUser.preferredLanguage || getDefaultLanguageCodeForState(st));
         setStep('VERIFIED');
       }
     } catch {
@@ -217,6 +232,8 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
     if (districtsForState.length > 0) {
       setEditDistrict(districtsForState[0].name);
     }
+    const defaultLang = getDefaultLanguageCodeForState(newState);
+    setEditLanguage(defaultLang);
   };
 
   // -------------------------------------------------------------
@@ -608,6 +625,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
           phoneNumber: editPhone.trim(),
           state: editState.trim(),
           district: editDistrict.trim(),
+          preferredLanguage: editLanguage.trim().toLowerCase(),
         }),
       });
 
@@ -621,6 +639,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
         phoneNumber: data.user?.phoneNumber ?? editPhone.trim(),
         state: data.user?.state ?? editState.trim(),
         district: data.user?.district ?? editDistrict.trim(),
+        preferredLanguage: data.user?.preferredLanguage ?? editLanguage.trim().toLowerCase(),
         phoneVerified: data.user?.phoneVerified ?? false,
       };
 
@@ -779,7 +798,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
     const targetEmail = email.trim() || verifiedProfile?.email || 'gaurxmratunjay@gmail.com';
 
     try {
-      const res = await fetch('/api/email/test-delivery', {
+      const { ok, data, error } = await safeFetchJson<any>('/api/email/test-delivery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -788,9 +807,8 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || data.error || 'Test email delivery failed.');
+      if (!ok || !data?.success) {
+        throw new Error(data?.message || data?.error || error || 'Test email delivery failed.');
       }
 
       setTestResult({
@@ -811,145 +829,22 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Top Banner */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 shrink-0">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                  NER-SAFE Account & Authentication
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  Dual-Verified &bull; MongoDB
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Sign in with your Name & Mobile, or Sign Up with Brevo Email OTP and 2Factor SMS OTP.
-              </p>
-            </div>
+      {/* 1. Clean Account Header */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700 shrink-0">
+            <ShieldCheck className="w-6 h-6" />
           </div>
-
-          {/* Service Integration Status Pills */}
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            {/* Brevo Pill */}
-            <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 text-[11px]">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  serviceStatus.emailApi === 'SUCCESS' ? 'bg-emerald-500' : 'bg-rose-500'
-                }`}
-              />
-              <span className="font-semibold text-slate-700">Brevo:</span>
-              <span className={serviceStatus.emailApi === 'SUCCESS' ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
-                {serviceStatus.emailApi === 'SUCCESS' ? 'READY' : 'OFFLINE'}
-              </span>
-            </div>
-
-            {/* 2Factor Pill */}
-            <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 text-[11px]">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  serviceStatus.smsApi === 'SUCCESS' ? 'bg-emerald-500' : 'bg-rose-500'
-                }`}
-              />
-              <span className="font-semibold text-slate-700">2Factor SMS:</span>
-              <span className={serviceStatus.smsApi === 'SUCCESS' ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
-                {serviceStatus.smsApi === 'SUCCESS' ? 'READY' : 'OFFLINE'}
-              </span>
-            </div>
+          <div>
+            <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+              {t('account.headerTitle', 'Account & Settings')}
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {t('account.headerDesc', 'Manage your resident contact details, district jurisdiction, and early warning alert preferences.')}
+            </p>
           </div>
         </div>
       </div>
-
-      {/* Diagnostics / Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Metric 1: Brevo Email */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center shrink-0">
-            <Mail className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Email Verification</div>
-            <div className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 mt-0.5">
-              <span>Brevo Active</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="text-[10px] text-slate-500">6-digit OTP &bull; Transactional Email</div>
-          </div>
-        </div>
-
-        {/* Metric 2: 2Factor SMS */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-            <Smartphone className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Mobile Verification</div>
-            <div className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 mt-0.5">
-              <span>2Factor SMS Active</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="text-[10px] text-slate-500">Real SMS OTP &bull; Cellular Delivery</div>
-          </div>
-        </div>
-
-        {/* Metric 3: Fast Test */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Service Diagnostics</div>
-            <button
-              onClick={checkServicesStatus}
-              className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-              title="Refresh status"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          <button
-            onClick={handleRunTestEmail}
-            disabled={isTestingDelivery}
-            className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
-          >
-            {isTestingDelivery ? (
-              <>
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                <span>Testing...</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-3.5 h-3.5" />
-                <span>Test Email Dispatch</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Test Result Alert */}
-      {testResult && (
-        <div
-          className={`p-4 rounded-xl border flex items-start gap-3 text-xs ${
-            testResult.success
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-              : 'bg-rose-50 border-rose-200 text-rose-900'
-          }`}
-        >
-          {testResult.success ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-          ) : (
-            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-          )}
-          <div className="space-y-1">
-            <p className="font-bold">{testResult.message}</p>
-            {testResult.id && (
-              <p className="text-[11px] font-mono text-emerald-700">Message ID: {testResult.id}</p>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Status Message */}
       {statusMessage && (
@@ -1017,7 +912,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
-                  <span>Edit Profile</span>
+                  <span>{t('common.edit', 'Edit Profile')}</span>
                 </button>
               ) : (
                 <button
@@ -1025,7 +920,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
-                  <span>Cancel</span>
+                  <span>{t('common.cancel', 'Cancel')}</span>
                 </button>
               )}
               <button
@@ -1034,7 +929,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                 title="Sign out from this session"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
+                <span>{t('profile.logoutBtn', 'Sign Out')}</span>
               </button>
             </div>
           </div>
@@ -1045,30 +940,30 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
               <form onSubmit={handleSaveProfile} className="space-y-4 max-w-lg">
                 <div className="border-b border-slate-100 pb-3">
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Update Profile Details
+                    {t('account.updateProfileTitle', 'Update Profile Details')}
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Modifications will be saved to your MongoDB user record.
+                    {t('account.updateProfileDesc', 'Modifications will update your registered profile.')}
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Full Name
+                    {t('account.fullName', 'Full Name')}
                   </label>
                   <input
                     type="text"
                     required
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Enter your full name"
+                    placeholder={t('account.namePlaceholder', 'Enter your full name')}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 transition-colors"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Mobile Number
+                    {t('account.mobileNumber', 'Mobile Number')}
                   </label>
                   <input
                     type="tel"
@@ -1083,7 +978,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      State (NER)
+                      {t('account.state', 'State (NER)')}
                     </label>
                     <select
                       value={editState}
@@ -1100,7 +995,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      District
+                      {t('account.district', 'District')}
                     </label>
                     <select
                       value={editDistrict}
@@ -1116,6 +1011,29 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span>{t('account.preferredAlertLang', 'Preferred Alert Language')}</span>
+                    <span className="text-[11px] font-normal text-slate-500 lowercase font-sans">
+                      Default: {getLanguageOptionByCode(getDefaultLanguageCodeForState(editState)).name} ({getDefaultLanguageCodeForState(editState)})
+                    </span>
+                  </label>
+                  <select
+                    value={editLanguage}
+                    onChange={(e) => setEditLanguage(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 transition-colors"
+                  >
+                    {SUPPORTED_LANGUAGES.map((lang) => (
+                      <option key={lang.code} value={lang.code}>
+                        {lang.name} — {lang.nativeName} ({lang.code.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {t('account.alertLangNotice', 'Emergency warnings will be automatically translated into this language using Gemini AI.')}
+                  </p>
+                </div>
+
                 <div className="flex items-center gap-3 pt-2">
                   <button
                     type="submit"
@@ -1125,12 +1043,12 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     {isSavingProfile ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Saving...</span>
+                        <span>{t('common.saving', 'Saving...')}</span>
                       </>
                     ) : (
                       <>
                         <Save className="w-3.5 h-3.5" />
-                        <span>Save Changes</span>
+                        <span>{t('common.save', 'Save Changes')}</span>
                       </>
                     )}
                   </button>
@@ -1139,7 +1057,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     onClick={() => setIsEditingProfile(false)}
                     className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                   >
-                    Cancel
+                    {t('common.cancel', 'Cancel')}
                   </button>
                 </div>
               </form>
@@ -1150,7 +1068,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   {/* Name */}
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      Full Name
+                      {t('account.fullName', 'Full Name')}
                     </span>
                     <span className="text-sm font-bold text-slate-900 mt-1 block">
                       {verifiedProfile.name || 'Verified Resident'}
@@ -1160,7 +1078,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   {/* Email */}
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      Email Address
+                      {t('account.emailAddress', 'Email Address')}
                     </span>
                     <span className="text-sm font-bold text-slate-900 mt-1 block font-mono">
                       {verifiedProfile.email}
@@ -1170,28 +1088,28 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   {/* Mobile */}
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      Mobile Number
+                      {t('account.mobileNumber', 'Mobile Number')}
                     </span>
                     <span className="text-sm font-bold text-slate-900 mt-1 block font-mono">
-                      {verifiedProfile.phoneNumber ? `+91 ${verifiedProfile.phoneNumber}` : 'Not registered'}
+                      {verifiedProfile.phoneNumber ? `+91 ${verifiedProfile.phoneNumber}` : t('account.notRegistered', 'Not registered')}
                     </span>
                   </div>
 
                   {/* Dual Verification Status */}
                   <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-200">
                     <span className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
-                      Verification Status
+                      {t('account.verificationStatus', 'Verification Status')}
                     </span>
                     <div className="flex items-center gap-1.5 mt-1 text-sm font-bold text-emerald-900">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Dual-Verified (Brevo & 2Factor)</span>
+                      <span>{t('account.dualVerifiedBadge', 'Dual-Verified (Email & Mobile)')}</span>
                     </div>
                   </div>
 
                   {/* State */}
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      State (NER)
+                      {t('account.state', 'State (NER)')}
                     </span>
                     <span className="text-sm font-bold text-slate-900 mt-1 block">
                       {verifiedProfile.state || 'Assam'}
@@ -1201,11 +1119,32 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   {/* District */}
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      District
+                      {t('account.district', 'District')}
                     </span>
                     <span className="text-sm font-bold text-slate-900 mt-1 block">
                       {verifiedProfile.district || 'Kamrup Metropolitan'}
                     </span>
+                  </div>
+
+                  {/* Preferred Alert Language */}
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        {t('account.alertLanguage', 'Alert Language')}
+                      </span>
+                      <span className="text-[10px] font-bold text-sky-700 bg-sky-100 px-1.5 py-0.5 rounded-full font-mono uppercase">
+                        {verifiedProfile.preferredLanguage || getDefaultLanguageCodeForState(verifiedProfile.state || 'Assam')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Languages className="w-4 h-4 text-sky-600 shrink-0" />
+                      <span className="text-sm font-bold text-slate-900">
+                        {getLanguageOptionByCode(verifiedProfile.preferredLanguage || getDefaultLanguageCodeForState(verifiedProfile.state || 'Assam')).name}
+                        <span className="text-xs font-normal text-slate-500 ml-1">
+                          ({getLanguageOptionByCode(verifiedProfile.preferredLanguage || getDefaultLanguageCodeForState(verifiedProfile.state || 'Assam')).nativeName})
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -1229,6 +1168,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                       setEditPhone(verifiedProfile.phoneNumber || '');
                       setEditState(verifiedProfile.state || 'Assam');
                       setEditDistrict(verifiedProfile.district || 'Kamrup Metropolitan');
+                      setEditLanguage(verifiedProfile.preferredLanguage || getDefaultLanguageCodeForState(verifiedProfile.state || 'Assam'));
                       setIsEditingProfile(true);
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
@@ -1263,7 +1203,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   }`}
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>Sign Up (New Resident)</span>
+                  <span>{t('account.signUpTab', 'Sign Up (New Resident)')}</span>
                 </button>
                 <button
                   type="button"
@@ -1278,13 +1218,13 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   }`}
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  <span>Sign In (Existing Resident)</span>
+                  <span>{t('account.signInTab', 'Sign In (Existing Resident)')}</span>
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-100 text-sky-800 border border-sky-200">
-                  Dual-Verification in Progress
+                  {t('account.verificationInProgress', 'Dual-Verification in Progress')}
                 </span>
               </div>
             )}
@@ -1300,7 +1240,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   >
                     1
                   </span>
-                  <span className="text-[11px] font-semibold text-slate-600">Resident Info</span>
+                  <span className="text-[11px] font-semibold text-slate-600">{t('account.stepInfo', 'Resident Info')}</span>
                 </div>
                 <div className="w-6 h-0.5 bg-slate-300" />
                 <div className="flex items-center gap-1.5">
@@ -1311,7 +1251,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   >
                     2
                   </span>
-                  <span className="text-[11px] font-semibold text-slate-600">Dual OTP (Email + SMS)</span>
+                  <span className="text-[11px] font-semibold text-slate-600">{t('account.stepDualOtp', 'Dual OTP (Email + SMS)')}</span>
                 </div>
               </div>
             )}
@@ -1328,17 +1268,17 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   <form onSubmit={handleInitiateSignup} className="space-y-4 max-w-lg">
                     <div>
                       <h2 className="text-sm font-bold text-slate-900">
-                        Create your NER-SAFE Resident Account
+                        {t('account.createTitle', 'Create your NER-SAFE Resident Account')}
                       </h2>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Register with your email and mobile number. Both will be verified with 6-digit OTP codes.
+                        {t('account.createDesc', 'Register with your email and mobile number. Both will be verified with 6-digit OTP codes.')}
                       </p>
                     </div>
 
                     {/* Name */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Full Name <span className="text-rose-500">*</span>
+                        {t('account.fullName', 'Full Name')} <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -1356,7 +1296,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     {/* Email */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Gmail / Email Address <span className="text-rose-500">*</span>
+                        {t('account.emailAddress', 'Gmail / Email Address')} <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -1365,19 +1305,19 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="e.g. gaurxmratunjay@gmail.com"
+                          placeholder="e.g. resident@nersafe.gov.in"
                           className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 transition-colors"
                         />
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1">
-                        Verified via Brevo Transactional Email OTP.
+                        {t('account.emailOtpNotice', 'A 6-digit OTP will be dispatched to your email address.')}
                       </p>
                     </div>
 
                     {/* Mobile Number */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Mobile Number <span className="text-rose-500">*</span>
+                        {t('account.mobileNumber', 'Mobile Number')} <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <div className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400 font-mono">
@@ -1394,7 +1334,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                         />
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1">
-                        Verified via real 2Factor SMS OTP.
+                        {t('account.mobileOtpNotice', 'A 6-digit SMS verification code will be sent to your mobile.')}
                       </p>
                     </div>
 
@@ -1402,7 +1342,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                          State (NER)
+                          {t('account.state', 'State (NER)')}
                         </label>
                         <select
                           value={selectedState}
@@ -1419,7 +1359,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                          District
+                          {t('account.district', 'District')}
                         </label>
                         <select
                           value={selectedDistrict}
@@ -1444,12 +1384,12 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                         {isSubmitting ? (
                           <>
                             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            <span>Sending Verification OTPs...</span>
+                            <span>{t('account.sendingCodes', 'Sending Verification OTPs...')}</span>
                           </>
                         ) : (
                           <>
                             <Send className="w-3.5 h-3.5" />
-                            <span>Send Verification Codes</span>
+                            <span>{t('account.continueBtn', 'Send Verification Codes')}</span>
                           </>
                         )}
                       </button>
@@ -1462,7 +1402,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                         }}
                         className="text-xs text-slate-600 hover:text-slate-900 font-semibold underline text-center sm:text-left py-1 cursor-pointer"
                       >
-                        Already registered? Sign In with Name & Mobile
+                        {t('account.alreadyRegistered', 'Already registered? Sign In with Name & Mobile')}
                       </button>
                     </div>
                   </form>
@@ -1473,17 +1413,17 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                   <form onSubmit={handleDirectLogin} className="space-y-4 max-w-lg">
                     <div>
                       <h2 className="text-sm font-bold text-slate-900">
-                        Sign In to your Registered Account
+                        {t('account.signInTitle', 'Sign In to your Registered Account')}
                       </h2>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Log in directly using your registered Name and Mobile Number. No OTP required.
+                        {t('account.signInDesc', 'Log in directly using your registered Name and Mobile Number. No OTP required.')}
                       </p>
                     </div>
 
                     {/* Login Name */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Registered Name <span className="text-rose-500">*</span>
+                        {t('account.registeredName', 'Registered Name')} <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -1501,7 +1441,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     {/* Login Phone */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Registered Mobile Number <span className="text-rose-500">*</span>
+                        {t('account.registeredMobile', 'Registered Mobile Number')} <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <div className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400 font-mono">
@@ -1513,13 +1453,25 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                           maxLength={10}
                           value={loginPhone}
                           onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
-                          placeholder="9876543210"
+                          placeholder="9214211711"
                           className="w-full pl-12 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-slate-900 transition-colors"
                         />
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        Instant sign-in matches against your verified MongoDB user record.
-                      </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-[11px] text-slate-500">
+                          {t('account.instantMatchNotice', 'Instant sign-in matches against your verified MongoDB user record.')}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLoginName('Mratunjay Gaur');
+                            setLoginPhone('9214211711');
+                          }}
+                          className="text-[11px] text-blue-600 hover:text-blue-800 font-medium underline cursor-pointer"
+                        >
+                          {t('account.useRegisteredAccount', 'Use registered account')}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -1531,12 +1483,12 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                         {isSubmitting ? (
                           <>
                             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            <span>Signing In...</span>
+                            <span>{t('account.signingIn', 'Signing In...')}</span>
                           </>
                         ) : (
                           <>
                             <LogIn className="w-3.5 h-3.5" />
-                            <span>Sign In</span>
+                            <span>{t('account.signInBtn', 'Sign In')}</span>
                           </>
                         )}
                       </button>
@@ -1549,7 +1501,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                         }}
                         className="text-xs text-slate-600 hover:text-slate-900 font-semibold underline text-center sm:text-left py-1 cursor-pointer"
                       >
-                        New resident? Create an account (Sign Up)
+                        {t('account.needAccount', 'New resident? Create an account (Sign Up)')}
                       </button>
                     </div>
                   </form>
@@ -1565,10 +1517,10 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div>
                     <h2 className="text-sm font-bold text-slate-900">
-                      Dual-Factor Verification Required
+                      {t('account.otpModalTitle', 'Dual-Factor Verification Required')}
                     </h2>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Verify BOTH your Email address and Mobile number to activate your resident account.
+                      {t('account.dualVerificationDesc', 'Verify BOTH your Email address and Mobile number to activate your resident account.')}
                     </p>
                   </div>
                   <button
@@ -1576,7 +1528,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     onClick={() => setStep('ENTER_DETAILS')}
                     className="text-xs text-slate-600 hover:text-slate-900 font-semibold underline cursor-pointer"
                   >
-                    Edit Details
+                    {t('common.edit', 'Edit Details')}
                   </button>
                 </div>
 
@@ -1592,22 +1544,22 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
                         <Mail className="w-4 h-4 text-sky-600" />
-                        <span>1. Email Verification</span>
+                        <span>1. {t('account.emailVerification', 'Email Verification')}</span>
                       </div>
                       {isEmailVerified ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                           <Check className="w-3 h-3 text-emerald-600" />
-                          VERIFIED
+                          {t('common.verified', 'VERIFIED')}
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                          PENDING
+                          {t('common.pending', 'PENDING')}
                         </span>
                       )}
                     </div>
 
                     <p className="text-[11px] text-slate-500 mb-3 truncate font-mono">
-                      Sent to: <strong>{email}</strong>
+                      {t('account.sentTo', 'Sent to:')} <strong>{email}</strong>
                     </p>
 
                     {!isEmailVerified ? (
@@ -1617,7 +1569,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                           maxLength={6}
                           value={emailOtp}
                           onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ''))}
-                          placeholder="Email 6-digit OTP"
+                          placeholder={t('account.emailOtpLabel', 'Email 6-digit OTP')}
                           className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-mono font-bold tracking-widest text-slate-900 focus:outline-none focus:border-slate-900"
                         />
                         <div className="flex items-center gap-2">
@@ -1627,7 +1579,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                             disabled={isVerifyingEmail || emailOtp.length !== 6}
                             className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
                           >
-                            {isVerifyingEmail ? 'Verifying...' : 'Verify Email'}
+                            {isVerifyingEmail ? t('common.loading', 'Verifying...') : t('account.verifyEmailBtn', 'Verify Email')}
                           </button>
                           <button
                             type="button"
@@ -1635,14 +1587,14 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                             disabled={emailCooldown > 0}
                             className="px-2.5 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg text-[11px] font-bold transition-colors cursor-pointer disabled:opacity-50"
                           >
-                            {emailCooldown > 0 ? `${emailCooldown}s` : 'Resend'}
+                            {emailCooldown > 0 ? `${emailCooldown}s` : t('account.resendOtpBtn', 'Resend')}
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div className="p-3 bg-emerald-100/60 rounded-lg border border-emerald-200 text-xs text-emerald-900 font-semibold flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Email address confirmed!</span>
+                        <span>{t('account.emailConfirmed', 'Email address confirmed!')}</span>
                       </div>
                     )}
                   </div>
@@ -1658,22 +1610,22 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
                         <Smartphone className="w-4 h-4 text-emerald-600" />
-                        <span>2. Mobile SMS Verification</span>
+                        <span>2. {t('account.smsVerification', 'Mobile SMS Verification')}</span>
                       </div>
                       {isPhoneVerified ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                           <Check className="w-3 h-3 text-emerald-600" />
-                          VERIFIED
+                          {t('common.verified', 'VERIFIED')}
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                          PENDING
+                          {t('common.pending', 'PENDING')}
                         </span>
                       )}
                     </div>
 
                     <p className="text-[11px] text-slate-500 mb-3 font-mono">
-                      Sent to: <strong>+91 {phoneNumber}</strong>
+                      {t('account.sentTo', 'Sent to:')} <strong>+91 {phoneNumber}</strong>
                     </p>
 
                     {!isPhoneVerified ? (
@@ -1683,7 +1635,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                           maxLength={6}
                           value={smsOtp}
                           onChange={(e) => setSmsOtp(e.target.value.replace(/\D/g, ''))}
-                          placeholder="SMS 6-digit OTP"
+                          placeholder={t('account.smsOtpLabel', 'SMS 6-digit OTP')}
                           className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-mono font-bold tracking-widest text-slate-900 focus:outline-none focus:border-slate-900"
                         />
                         <div className="flex items-center gap-2">
@@ -1693,7 +1645,7 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                             disabled={isVerifyingSms || smsOtp.length !== 6}
                             className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
                           >
-                            {isVerifyingSms ? 'Verifying...' : 'Verify SMS Code'}
+                            {isVerifyingSms ? t('common.loading', 'Verifying...') : t('account.verifySmsBtn', 'Verify SMS Code')}
                           </button>
                           <button
                             type="button"
@@ -1701,14 +1653,14 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                             disabled={smsCooldown > 0}
                             className="px-2.5 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg text-[11px] font-bold transition-colors cursor-pointer disabled:opacity-50"
                           >
-                            {smsCooldown > 0 ? `${smsCooldown}s` : 'Resend'}
+                            {smsCooldown > 0 ? `${smsCooldown}s` : t('account.resendOtpBtn', 'Resend')}
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div className="p-3 bg-emerald-100/60 rounded-lg border border-emerald-200 text-xs text-emerald-900 font-semibold flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Mobile number confirmed via 2Factor!</span>
+                        <span>{t('account.mobileConfirmed', 'Mobile number confirmed!')}</span>
                       </div>
                     )}
                   </div>
@@ -1720,10 +1672,10 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     {isEmailVerified && isPhoneVerified ? (
                       <span className="text-emerald-700 font-bold flex items-center gap-1.5">
                         <CheckCircle className="w-4 h-4" />
-                        Both verifications completed! Ready to finalize.
+                        {t('account.bothVerified', 'Both verifications completed! Ready to finalize.')}
                       </span>
                     ) : (
-                      <span>Complete both steps above to activate your account.</span>
+                      <span>{t('account.completeBothNotice', 'Complete both steps above to activate your account.')}</span>
                     )}
                   </div>
 
@@ -1736,12 +1688,12 @@ export const UserAccountConsole: React.FC<UserAccountConsoleProps> = ({ onNaviga
                     {isFinalizingSignup ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Activating Account...</span>
+                        <span>{t('account.activatingAccount', 'Activating Account...')}</span>
                       </>
                     ) : (
                       <>
                         <ShieldCheck className="w-4 h-4" />
-                        <span>Complete Registration</span>
+                        <span>{t('account.completeRegistration', 'Complete Registration')}</span>
                       </>
                     )}
                   </button>

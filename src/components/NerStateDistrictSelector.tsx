@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Navigation, Compass } from 'lucide-react';
 import { LocationItem } from '../types/weather';
 import { INDIA_STATES_DATA, NER_STATES, ALL_DISTRICTS } from '../data/indiaLocations';
@@ -14,6 +15,8 @@ export const NerStateDistrictSelector: React.FC<NerStateDistrictSelectorProps> =
   onSelectLocation,
   isLoading,
 }) => {
+  const { t } = useTranslation();
+
   // Filter only the 8 NER states
   const nerStatesData = INDIA_STATES_DATA.filter((s) => NER_STATES.includes(s.name));
 
@@ -57,14 +60,14 @@ export const NerStateDistrictSelector: React.FC<NerStateDistrictSelectorProps> =
         <div>
           <div className="flex items-center gap-2">
             <span className="bg-blue-100 text-blue-800 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded tracking-wider">
-              8-State NER Hub
+              {t('selector.hubBadge', '8-State NER Hub')}
             </span>
             <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
-              North Eastern Environmental & Terrain Observatory
+              {t('selector.observatoryTitle', 'North Eastern Environmental & Terrain Observatory')}
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Select an NER state and district to inspect real terrain DEM, calculated slope, ECMWF soil moisture, and verified GSI historical landslides.
+            {t('selector.observatorySubtitle', 'Select an NER state and district to inspect real terrain DEM, calculated slope, ECMWF soil moisture, and verified GSI historical landslides.')}
           </p>
         </div>
 
@@ -84,7 +87,7 @@ export const NerStateDistrictSelector: React.FC<NerStateDistrictSelectorProps> =
         {/* 1. State Selector */}
         <div className="lg:col-span-4">
           <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-            1. Select NER State (8 States)
+            {t('selector.selectStateLabel', '1. Select NER State (8 States)')}
           </label>
           <select
             value={selectedLocation.state}
@@ -94,7 +97,7 @@ export const NerStateDistrictSelector: React.FC<NerStateDistrictSelectorProps> =
           >
             {nerStatesData.map((st) => (
               <option key={st.name} value={st.name}>
-                {st.name} ({st.districts.length} Districts)
+                {st.name} ({st.districts.length} {t('common.districts', 'Districts')})
               </option>
             ))}
           </select>
@@ -103,7 +106,7 @@ export const NerStateDistrictSelector: React.FC<NerStateDistrictSelectorProps> =
         {/* 2. District Selector */}
         <div className="lg:col-span-4">
           <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-            2. Select District ({currentDistricts.length} Available)
+            {t('selector.selectDistrictLabel', '2. Select District ({{count}} Available)', { count: currentDistricts.length })}
           </label>
           <select
             value={selectedLocation.id}
@@ -122,7 +125,7 @@ export const NerStateDistrictSelector: React.FC<NerStateDistrictSelectorProps> =
         {/* 3. Quick Hotspot Jump */}
         <div className="lg:col-span-4">
           <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-            Critical NER Observation Corridors
+            {t('selector.hotspotsLabel', 'Critical NER Observation Corridors')}
           </label>
           <div className="flex flex-wrap gap-1.5">
             {hotSpotDistricts.slice(0, 6).map((hs) => {

@@ -8,6 +8,7 @@ export interface UserProfileData {
   phoneNumber?: string;
   state: string;
   district: string;
+  preferredLanguage?: string;
   isVerified: boolean;
   emailVerified?: boolean;
   emailVerifiedAt?: string;

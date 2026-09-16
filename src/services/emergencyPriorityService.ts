@@ -281,54 +281,7 @@ export function buildEmergencyPriorityList(
     });
   });
 
-  // 2. Identify top high-risk districts without existing incident reports (proactive monitoring)
-  districtRiskPoints.forEach((distPoint) => {
-    if (distPoint.riskScore && distPoint.riskScore >= 70 && distPoint.status === 'READY') {
-      const alreadyHasIncident = items.some(
-        (it) => it.district.toLowerCase() === distPoint.districtName.toLowerCase()
-      );
-
-      if (!alreadyHasIncident) {
-        const priorityLevel: EmergencyPriorityLevel = distPoint.riskScore >= 80 ? 'CRITICAL' : 'HIGH';
-        const priorityScore = Math.round(distPoint.riskScore * 0.95);
-        const districtKey = distPoint.districtName.toLowerCase();
-        const infra = NER_LIFELINE_INFRASTRUCTURE[districtKey];
-
-        const affectedRoads = infra ? infra.roads : ['District Highway Arterial'];
-        const nearbyInfra = infra ? infra.infrastructure : `${distPoint.districtName} Hill Settlements`;
-
-        const reason = `High multi-factor landslide hazard (${distPoint.riskScore}/100) triggered by ${distPoint.slopeDegrees ?? 30}° steep terrain and elevated soil saturation.`;
-
-        items.push({
-          id: `PRIO-ENV-${distPoint.districtId}`,
-          sourceType: 'HIGH_RISK_DISTRICT',
-          priorityLevel,
-          priorityScore,
-          riskScore: distPoint.riskScore,
-          riskLevel: distPoint.riskLevel === 'UNAVAILABLE' ? 'LOW' : distPoint.riskLevel,
-          locationName: `${distPoint.districtName} High Susceptibility Sector`,
-          district: distPoint.districtName,
-          state: distPoint.state,
-          latitude: distPoint.latitude,
-          longitude: distPoint.longitude,
-          incidentType: 'High Hazard Slope',
-          affectedRoads,
-          nearbyInfrastructureOrVillage: nearbyInfra,
-          mainReason: reason,
-          status: 'ACTIVE MONITORING',
-          lastUpdated: distPoint.lastUpdated || new Date().toISOString(),
-          telemetryDetails: {
-            currentPrecipitationMm: distPoint.currentPrecipitationMm,
-            soilSaturationPercent: distPoint.soilSaturationPercent,
-            slopeDegrees: distPoint.slopeDegrees,
-            historicalLandslideCount: distPoint.historicalLandslideCount,
-          },
-        });
-      }
-    }
-  });
-
-  // Sort strictly by Priority Level (CRITICAL -> HIGH -> MEDIUM -> LOW), then by priorityScore descending
+  // Sort strictly real incidents by Priority Level (CRITICAL -> HIGH -> MEDIUM -> LOW), then by priorityScore descending
   const priorityRank: Record<EmergencyPriorityLevel, number> = {
     CRITICAL: 4,
     HIGH: 3,

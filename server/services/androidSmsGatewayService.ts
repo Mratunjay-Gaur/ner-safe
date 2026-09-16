@@ -238,6 +238,7 @@ export async function sendWarningSmsViaAndroidGateway(params: {
   riskScore: number;
   mainFactor?: string;
   recommendedAction?: string;
+  customMessageText?: string;
 }): Promise<AndroidSmsSendResult> {
   const rawPhone = (params.phoneNumber || '').trim();
   const phoneNorm = normalizeCanonicalPhone(rawPhone);
@@ -255,7 +256,7 @@ export async function sendWarningSmsViaAndroidGateway(params: {
     };
   }
 
-  const messageText = buildSmsWarningMessage({
+  const messageText = params.customMessageText?.trim() || buildSmsWarningMessage({
     severity: params.alertSeverity,
     state: params.state,
     district: params.district,

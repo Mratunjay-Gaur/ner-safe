@@ -12,6 +12,7 @@ export interface WarningEmailData {
   alertSeverity: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'ADVISORY' | 'WATCH';
   state: string;
   district: string;
+  recipientState?: string;
   riskLevel: string;
   riskScore: number;
   mainContributingFactors: string[];
@@ -25,6 +26,92 @@ export interface WarningEmailData {
   alertTimestamp: string;
   recommendedAction: string;
   officialAdvisorySource?: string;
+  regionalAdvisoryParagraph?: string;
+}
+
+/**
+ * Pre-recorded Regional-Language Advisory Paragraphs for North-Eastern States
+ * Selected by recipient.state:
+ * Assam → Assamese
+ * Arunachal Pradesh → English
+ * Manipur → Meitei
+ * Meghalaya → Khasi
+ * Mizoram → Mizo
+ * Nagaland → English
+ * Sikkim → Nepali
+ * Tripura → Bengali
+ */
+export interface RegionalAdvisoryEntry {
+  state: string;
+  language: string;
+  nativeTitle: string;
+  paragraph: string;
+}
+
+export const STATE_REGIONAL_ADVISORY_MAP: Record<string, RegionalAdvisoryEntry> = {
+  'assam': {
+    state: 'Assam',
+    language: 'Assamese',
+    nativeTitle: 'অসমীয়া Regional Advisory:',
+    paragraph: 'এইটো এটা জৰুৰী দুৰ্যোগ সতৰ্কবাণী। আপোনাৰ অঞ্চলত ভূমিস্খলন, ধাৰাসাৰ বৰষুণ বা অন্যান্য প্ৰাকৃতিক বিপদৰ সম্ভাৱনা আছে। অনুগ্ৰহ কৰি বিপদজনক ঢাল, পাহাৰীয়া পথ আৰু ভূমিস্খলনপ্ৰৱণ অঞ্চল এৰাই চলক আৰু স্থানীয় কৰ্তৃপক্ষৰ নিৰ্দেশনা অনুসৰণ কৰক।',
+  },
+  'arunachal pradesh': {
+    state: 'Arunachal Pradesh',
+    language: 'English',
+    nativeTitle: 'Regional Advisory:',
+    paragraph: 'This is an official disaster warning. Your area may be affected by landslides, heavy rainfall, or other hazards. Please avoid vulnerable slopes and mountain roads, stay alert, and follow instructions issued by local authorities.',
+  },
+  'manipur': {
+    state: 'Manipur',
+    language: 'Meitei (Manipuri)',
+    nativeTitle: 'Meitei Regional Advisory:',
+    paragraph: 'মসিগী মেসেজ অসি অশেংবা দুর্যোগ সতৰ্কতা অমনি। নংগী এলাকা অসিদা ভূমিস্খলন, অমাং-অমাংগী উমাংবী নুংশিত অমসুং অতোপ্পা হায়জরোল শোয়দনা ইয়াই। খুদংচাবা লৈবা পাহাড়ী লাইন অমসুং অরোয়বা এলাকা অসি থাদোকউ অমসুং স্থানীয় কর্তৃপক্ষগী নির্দেশনা অনুসরণ তৌউ।',
+  },
+  'meghalaya': {
+    state: 'Meghalaya',
+    language: 'Khasi',
+    nativeTitle: 'Khasi Regional Advisory:',
+    paragraph: 'Kane ka dei ka jingmaham halor ka jingjia shawi. Ka don ka jingma jong ka jingtuid ka khyndew, u slap uba jur ne kiwei pat ki jingma ha ka shnong jong phi. Sngewbha kiar na ki jaka ba don jingma, ki surok lum bad ki jaka ba lah ban jia ka jingtuid khyndew, bad bud ia ki jingbthah jong ki bor sorkar shnong.',
+  },
+  'mizoram': {
+    state: 'Mizoram',
+    language: 'Mizo',
+    nativeTitle: 'Mizo Regional Advisory:',
+    paragraph: 'Hemi hi emergency disaster warning a ni. In khuah laiin, ruahsur tam tak, emaw thil hlauhawm dang thlen theih tih hmunah hian harsatna a thlen theih. Hmun hlauhawm, tlang kawng leh landslide thlen theih hmun te chu kal loh a, local authority thuchhuahte zawm rawh le.',
+  },
+  'nagaland': {
+    state: 'Nagaland',
+    language: 'English',
+    nativeTitle: 'Regional Advisory:',
+    paragraph: 'This is an official disaster warning. Your area may be affected by landslides, heavy rainfall, or related hazards. Please avoid dangerous slopes and vulnerable roads, remain alert, and follow instructions from local authorities.',
+  },
+  'sikkim': {
+    state: 'Sikkim',
+    language: 'Nepali',
+    nativeTitle: 'नेपाली Regional Advisory:',
+    paragraph: 'यो एक आधिकारिक विपद् चेतावनी हो। तपाईंको क्षेत्रमा पहिरो, भारी वर्षा वा अन्य प्राकृतिक जोखिम हुन सक्ने सम्भावना छ। कृपया जोखिमयुक्त भिरालो ठाउँ, पहाडी सडक र पहिरो सम्भावিত क्षेत्रबाट टाढा रहनुहोस् र स्थानीय प्रशासनको निर्देशन पालना गर्नुहोस्।',
+  },
+  'tripura': {
+    state: 'Tripura',
+    language: 'Bengali',
+    nativeTitle: 'বাংলা Regional Advisory:',
+    paragraph: 'এটি একটি সরকারি দুর্যোগ সতর্কবার্তা। আপনার এলাকায় ভূমিধস, ভারী বৃষ্টি বা অন্যান্য প্রাকৃতিক বিপদের সম্ভাবনা রয়েছে। অনুগ্রহ করে ঝুঁকিপূর্ণ পাহাড়ি এলাকা, ঢাল এবং রাস্তা এড়িয়ে চলুন এবং স্থানীয় প্রশাসনের নির্দেশনা মেনে চলুন।',
+  },
+};
+
+export function getRegionalAdvisoryForState(stateName?: string): RegionalAdvisoryEntry {
+  const norm = (stateName || '').toLowerCase().trim();
+  if (norm.includes('assam')) return STATE_REGIONAL_ADVISORY_MAP['assam'];
+  if (norm.includes('arunachal')) return STATE_REGIONAL_ADVISORY_MAP['arunachal pradesh'];
+  if (norm.includes('manipur')) return STATE_REGIONAL_ADVISORY_MAP['manipur'];
+  if (norm.includes('meghalaya')) return STATE_REGIONAL_ADVISORY_MAP['meghalaya'];
+  if (norm.includes('mizoram')) return STATE_REGIONAL_ADVISORY_MAP['mizoram'];
+  if (norm.includes('nagaland')) return STATE_REGIONAL_ADVISORY_MAP['nagaland'];
+  if (norm.includes('sikkim')) return STATE_REGIONAL_ADVISORY_MAP['sikkim'];
+  if (norm.includes('tripura')) return STATE_REGIONAL_ADVISORY_MAP['tripura'];
+
+  // Default fallback to English
+  return STATE_REGIONAL_ADVISORY_MAP['arunachal pradesh'];
 }
 
 /**
@@ -125,6 +212,7 @@ async function sendBrevoMail(params: {
   toName?: string;
   subject: string;
   htmlContent: string;
+  textContent?: string;
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const config = getBrevoConfig();
   const recipientEmail = params.toEmail.trim().toLowerCase();
@@ -132,6 +220,24 @@ async function sendBrevoMail(params: {
 
   // Try REST API v3
   try {
+    const payload: Record<string, any> = {
+      sender: {
+        name: config.senderName,
+        email: config.senderEmail,
+      },
+      to: [
+        {
+          email: recipientEmail,
+          name: recipientName,
+        },
+      ],
+      subject: params.subject,
+      htmlContent: params.htmlContent,
+    };
+    if (params.textContent) {
+      payload.textContent = params.textContent;
+    }
+
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -139,20 +245,7 @@ async function sendBrevoMail(params: {
         'content-type': 'application/json',
         'api-key': config.apiKey,
       },
-      body: JSON.stringify({
-        sender: {
-          name: config.senderName,
-          email: config.senderEmail,
-        },
-        to: [
-          {
-            email: recipientEmail,
-            name: recipientName,
-          },
-        ],
-        subject: params.subject,
-        htmlContent: params.htmlContent,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (response.ok) {
@@ -174,6 +267,7 @@ async function sendBrevoMail(params: {
       to: `"${recipientName}" <${recipientEmail}>`,
       subject: params.subject,
       html: params.htmlContent,
+      text: params.textContent,
     });
 
     return {
@@ -320,7 +414,14 @@ export async function sendWarningEmail(
     alertTimestamp,
     recommendedAction,
     officialAdvisorySource = 'NER-SAFE Landslide & Hydro-Meteorological Risk Intelligence Engine',
+    regionalAdvisoryParagraph,
   } = warningData;
+
+  // Select corresponding pre-recorded regional-language advisory paragraph by recipient.state
+  const targetStateForAdvisory = warningData.recipientState || state || 'Assam';
+  const regionalAdvisory = getRegionalAdvisoryForState(targetStateForAdvisory);
+  const advisoryTitle = regionalAdvisory.nativeTitle || `${regionalAdvisory.language} Regional Advisory:`;
+  const selectedParagraph = regionalAdvisory.paragraph;
 
   const severityColor =
     alertSeverity === 'CRITICAL'
@@ -340,12 +441,16 @@ export async function sendWarningEmail(
       ? '#fffbeb'
       : '#f0f9ff';
 
-  const factorsHtml =
+  const factorsList =
     mainContributingFactors && mainContributingFactors.length > 0
       ? mainContributingFactors
-          .map((factor) => `<li style="margin-bottom: 6px; color: #334155;">${factor}</li>`)
-          .join('')
-      : '<li style="color: #64748b;">Severe precipitation and elevated geological slope saturation.</li>';
+      : ['Severe precipitation and elevated geological slope saturation.'];
+
+  const factorsHtml = factorsList
+    .map((factor) => `<li style="margin-bottom: 6px; color: #334155;">${factor}</li>`)
+    .join('');
+
+  const subject = `⚠️ [${alertSeverity}] Landslide Advisory: ${district}, ${state} (Risk: ${riskScore}/100)`;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -367,7 +472,7 @@ export async function sendWarningEmail(
               <table role="presentation" width="100%">
                 <tr>
                   <td>
-                    <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #ffffff; opacity: 0.9;">
+                    <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #ffffff; opacity: 0.95;">
                       OFFICIAL DISASTER ADVISORY &bull; ${alertSeverity} ALERT
                     </div>
                     <div style="font-size: 22px; font-weight: 900; color: #ffffff; margin-top: 4px;">
@@ -392,6 +497,20 @@ export async function sendWarningEmail(
                 Dear <strong>${recipientName}</strong>,<br>
                 The <strong>NER-SAFE Multi-Source Hydro-Meteorological Early Warning System</strong> has evaluated severe geological risk indicators in your registered district of <strong>${district}, ${state}</strong>.
               </p>
+
+              <!-- Regional Advisory Section -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 20px; background-color: #eff6ff; border-left: 4px solid #2563eb; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 14px 18px;">
+                    <div style="font-size: 13px; font-weight: 800; color: #1e40af; margin-bottom: 6px;">
+                      ${advisoryTitle}
+                    </div>
+                    <div style="font-size: 14px; line-height: 1.6; color: #1e293b; font-weight: 500;">
+                      ${selectedParagraph}
+                    </div>
+                  </td>
+                </tr>
+              </table>
 
               <!-- Alert Details Box -->
               <div style="background-color: ${severityBg}; border-left: 4px solid ${severityColor}; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
@@ -419,25 +538,25 @@ export async function sendWarningEmail(
                 <tr>
                   <td style="padding: 6px 12px; color: #64748b;">Current Precipitation:</td>
                   <td style="padding: 6px 12px; font-weight: 700; color: #0f172a; text-align: right;">
-                    ${weatherConditions.currentPrecipitationMm ?? 'N/A'} mm/h
+                    ${weatherConditions?.currentPrecipitationMm ?? 'N/A'} mm/h
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 12px; color: #64748b;">72h Cumulative Rainfall:</td>
                   <td style="padding: 6px 12px; font-weight: 700; color: #0f172a; text-align: right;">
-                    ${weatherConditions.cumulativeRainfall72hMm ?? 'N/A'} mm
+                    ${weatherConditions?.cumulativeRainfall72hMm ?? 'N/A'} mm
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 12px; color: #64748b;">Soil Moisture Saturation:</td>
                   <td style="padding: 6px 12px; font-weight: 700; color: #0f172a; text-align: right;">
-                    ${weatherConditions.soilSaturationPercent ?? 'N/A'}%
+                    ${weatherConditions?.soilSaturationPercent ?? 'N/A'}%
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 12px; color: #64748b;">24h Forecast Precipitation:</td>
                   <td style="padding: 6px 12px; font-weight: 700; color: #0f172a; text-align: right;">
-                    ${weatherConditions.forecastPrecipitationNext24hMm ?? 'N/A'} mm
+                    ${weatherConditions?.forecastPrecipitationNext24hMm ?? 'N/A'} mm
                   </td>
                 </tr>
               </table>
@@ -475,10 +594,49 @@ export async function sendWarningEmail(
 </html>
 `;
 
+  const textContent = `
+[OFFICIAL DISASTER ADVISORY - ${alertSeverity} ALERT]
+Target Area: ${district}, ${state}
+Risk Score: ${riskScore}/100 | Evaluated Risk Level: ${riskLevel}
+Issued at: ${new Date(alertTimestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST
+
+${advisoryTitle}
+${selectedParagraph}
+
+ACTION REQUIRED:
+${recommendedAction}
+
+KEY HAZARD DRIVERS:
+${factorsList.map((f) => `• ${f}`).join('\n')}
+
+TELEMETRY:
+• Current Precipitation: ${weatherConditions?.currentPrecipitationMm ?? 'N/A'} mm/h
+• 72h Cumulative Rainfall: ${weatherConditions?.cumulativeRainfall72hMm ?? 'N/A'} mm
+• Soil Saturation: ${weatherConditions?.soilSaturationPercent ?? 'N/A'}%
+• 24h Forecast Precipitation: ${weatherConditions?.forecastPrecipitationNext24hMm ?? 'N/A'} mm
+
+EMERGENCY GUIDELINES:
+• Avoid steep roadside cutting slopes and landslide-prone mountain passes.
+• In case of slope fissures or sudden muddy water runoff, evacuate to designated high-ground shelters.
+• Keep emergency kits, essential medication, and local SDMA/NDRF contacts accessible.
+
+${officialAdvisorySource}
+State Disaster Management Authority (1070/1077) | NDRF (112)
+`.trim();
+
+  console.log('[ALERT EMAIL DISPATCH TRACE]');
+  console.log('recipientEmail:', recipientEmail);
+  console.log('recipientState:', targetStateForAdvisory);
+  console.log('advisoryTitle:', advisoryTitle);
+  console.log('selectedParagraph:', selectedParagraph);
+  console.log('recommendedAction:', recommendedAction);
+  console.log('htmlContent.includes(selectedParagraph):', htmlContent.includes(selectedParagraph));
+
   return sendBrevoMail({
     toEmail: recipientEmail,
     toName: recipientName,
-    subject: `⚠️ [${alertSeverity}] Landslide Advisory: ${district}, ${state} (Risk: ${riskScore}/100)`,
+    subject,
     htmlContent,
+    textContent,
   });
 }

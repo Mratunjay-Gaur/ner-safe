@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 520" width="100%" height="100%">
+  <defs>
+    <!-- River Gradient -->
+    <linearGradient id="riverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d4ed8" />
+      <stop offset="50%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <linearGradient id="riverWave" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#dbeafe" stop-opacity="0.95" />
+    </linearGradient>
+    <!-- Mountain Shadow/Lighting Gradient -->
+    <linearGradient id="mountainDark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#14532d" />
+      <stop offset="100%" stop-color="#15803d" />
+    </linearGradient>
+    <!-- Landslide Slope Gradient -->
+    <linearGradient id="slopeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#92400e" />
+      <stop offset="60%" stop-color="#78350f" />
+      <stop offset="100%" stop-color="#542807" />
+    </linearGradient>
+    <!-- Cloud Gradient -->
+    <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+    <!-- Clip Path for the Circular Emblem -->
+    <clipPath id="circleClip">
+      <circle cx="250" cy="180" r="142" />
+    </clipPath>
+  </defs>
+
+  <!-- ==================== CIRCULAR EMBLEM ==================== -->
+  <!-- Outer Signal / Radar Arcs (Top Left) -->
+  <path d="M 175 62 A 136 136 0 0 1 250 44" fill="none" stroke="#15803d" stroke-width="10" stroke-linecap="round" />
+  <path d="M 152 88 A 158 158 0 0 1 250 22" fill="none" stroke="#16a34a" stroke-width="10" stroke-linecap="round" />
+  <path d="M 132 118 A 180 180 0 0 1 250 0" fill="none" stroke="#15803d" stroke-width="10" stroke-linecap="round" />
+
+  <!-- Main Circle Content Container -->
+  <g clip-path="url(#circleClip)">
+    <!-- Sky Background -->
+    <circle cx="250" cy="180" r="142" fill="#ffffff" />
+
+    <!-- Mountain Peaks (Green) -->
+    <!-- Left Mountain Peak -->
+    <polygon points="110,320 185,170 240,260 210,320" fill="url(#mountainDark)" />
+    <!-- Center / Tall Mountain Peak -->
+    <polygon points="170,320 235,135 320,270 270,320" fill="#15803d" />
+    <!-- Secondary Foothill behind slope -->
+    <polygon points="250,300 295,190 350,290" fill="#166534" />
+
+    <!-- Mountain Snow Caps -->
+    <!-- Left Snow Cap -->
+    <polygon points="185,170 170,200 180,195 186,206 195,196 200,200" fill="#ffffff" />
+    <!-- Center Snow Cap with Ridges -->
+    <polygon points="235,135 215,180 225,174 233,188 243,172 255,182 250,165" fill="#ffffff" />
+
+    <!-- Landslide Cliff / Brown Slope (Right) -->
+    <path d="M 370 140 Q 320 200 300 250 Q 285 290 270 325 L 392 325 L 392 140 Z" fill="url(#slopeGrad)" />
+
+    <!-- Tumbling Landslide Rocks / Boulders -->
+    <polygon points="305,200 318,195 322,208 312,216 302,210" fill="#78350f" stroke="#451a03" stroke-width="1.5" />
+    <polygon points="325,218 338,212 342,224 332,232 322,227" fill="#854d0e" stroke="#542807" stroke-width="1.5" />
+    <polygon points="288,235 298,230 304,242 295,250 285,244" fill="#92400e" stroke="#451a03" stroke-width="1.5" />
+    <polygon points="310,250 322,243 328,255 318,264 306,258" fill="#78350f" stroke="#3b1704" stroke-width="1.5" />
+    <polygon points="275,268 288,262 293,275 282,284 271,277" fill="#854d0e" stroke="#542807" stroke-width="1.5" />
+    <polygon points="296,285 308,279 313,291 303,299 292,294" fill="#92400e" stroke="#451a03" stroke-width="1.5" />
+
+    <!-- Flowing River (Curved Ribbon) -->
+    <path d="M 230 240 Q 260 250 240 268 Q 200 285 160 300 Q 130 315 125 325 L 340 325 Q 310 295 285 270 Q 260 255 240 240 Z" fill="url(#riverGrad)" />
+    <!-- White Water River Highlights -->
+    <path d="M 232 248 Q 255 258 238 272 Q 205 288 170 303 Q 148 314 140 325" fill="none" stroke="url(#riverWave)" stroke-width="6" stroke-linecap="round" />
+    <path d="M 252 260 Q 235 275 210 290 Q 185 305 175 320" fill="none" stroke="#ffffff" stroke-width="3" stroke-opacity="0.9" stroke-linecap="round" />
+
+    <!-- Rain Cloud (Slate Grey) -->
+    <g transform="translate(268, 80)">
+      <path d="M 20 45 L 85 45 A 18 18 0 0 0 85 9 A 24 24 0 0 0 42 0 A 20 20 0 0 0 20 22 A 16 16 0 0 0 20 45 Z" fill="url(#cloudGrad)" />
+      <!-- Slanted Raindrops -->
+      <line x1="32" y1="52" x2="22" y2="76" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" />
+      <line x1="52" y1="52" x2="42" y2="76" stroke="#0284c7" stroke-width="6" stroke-linecap="round" />
+      <line x1="72" y1="52" x2="62" y2="76" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" />
+    </g>
+
+    <!-- Outer Circular Border Accent -->
+    <circle cx="250" cy="180" r="141" fill="none" stroke="#15803d" stroke-width="6" />
+  </g>
+
+  <!-- ==================== BRAND TYPOGRAPHY ==================== -->
+  <!-- "NER-SAFE" Wordmark -->
+  <g id="brand-wordmark" transform="translate(250, 395)" text-anchor="middle">
+    <text font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="52" letter-spacing="-0.5">
+      <tspan fill="#0f2942">NER-</tspan>
+      <tspan fill="#15803d">SAFE</tspan>
+    </text>
+  </g>
+
+  <!-- Subtitle: Live Weather & Land Monitor -->
+  <g id="brand-subtitle" transform="translate(250, 432)" text-anchor="middle">
+    <text font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="20" fill="#334155" letter-spacing="1">
+      Live Weather &amp; Land Monitor
+    </text>
+  </g>
+
+  <!-- Tagline: SAFER COMMUNITIES • RESILIENT NORTH EAST -->
+  <g id="brand-tagline" transform="translate(250, 462)" text-anchor="middle">
+    <!-- Left Divider Line -->
+    <line x1="-205" y1="-5" x2="-145" y2="-5" stroke="#94a3b8" stroke-width="1.2" />
+    <!-- Tagline Text -->
+    <text font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="11" fill="#64748b" letter-spacing="2">
+      SAFER COMMUNITIES
+      <tspan fill="#15803d" font-size="14" dx="6" dy="-1">•</tspan>
+      <tspan dx="6" dy="1">RESILIENT NORTH EAST</tspan>
+    </text>
+    <!-- Right Divider Line -->
+    <line x1="145" y1="-5" x2="205" y2="-5" stroke="#94a3b8" stroke-width="1.2" />
+  </g>
+</svg>

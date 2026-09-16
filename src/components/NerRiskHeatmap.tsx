@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import {
   Layers,
@@ -41,6 +42,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
   onSelectLocation,
   currentDistrictAssessment,
 }) => {
+  const { t } = useTranslation();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const heatLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -537,8 +539,8 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
-                  <span>AI-Assisted Estimated Landslide Risk Heatmap</span>
-                  <span className="text-xs text-slate-400 font-normal hidden sm:inline">• North Eastern Region</span>
+                  <span>{t('riskHeatmap.title', 'AI-Assisted Estimated Landslide Risk Heatmap')}</span>
+                  <span className="text-xs text-slate-400 font-normal hidden sm:inline">• {t('riskHeatmap.nerSubtitle', 'North Eastern Region')}</span>
                 </h2>
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black border uppercase tracking-wider ${
@@ -548,11 +550,11 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
                   }`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${isLiveTelemetry ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'}`} />
-                  {isLiveTelemetry ? 'LIVE TELEMETRY' : 'SYNCING'}
+                  {isLiveTelemetry ? t('riskHeatmap.liveTelemetry', 'LIVE TELEMETRY') : t('riskHeatmap.syncing', 'SYNCING')}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                AI-Assisted Estimated Landslide Risk calculated for 130 NER districts using real WMO weather, Copernicus DEM slope, and ECMWF soil moisture. Not a guaranteed prediction.
+                {t('riskHeatmap.description', 'AI-Assisted Estimated Landslide Risk calculated for 130 NER districts using real WMO weather, Copernicus DEM slope, and ECMWF soil moisture. Not a guaranteed prediction.')}
               </p>
             </div>
           </div>
@@ -572,7 +574,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
               title="Refresh all district risk calculations"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>{isLoading ? `Evaluating (${loadProgress}%)` : 'Refresh Heatmap'}</span>
+              <span>{isLoading ? `${t('riskHeatmap.evaluating', 'Evaluating')} (${loadProgress}%)` : t('riskHeatmap.refresh', 'Refresh Heatmap')}</span>
             </button>
           </div>
         </div>
@@ -581,7 +583,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
         {isLoading && (
           <div className="mt-3">
             <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
-              <span>Evaluating multi-factor risk for 130 NER districts...</span>
+              <span>{t('riskHeatmap.progressEvaluating', 'Evaluating multi-factor risk for 130 NER districts...')}</span>
               <span className="font-bold font-mono">{loadProgress}%</span>
             </div>
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -604,11 +606,11 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase text-red-700">CRITICAL</span>
+              <span className="text-[10px] font-extrabold uppercase text-red-700">{t('riskLevels.critical', 'CRITICAL')}</span>
               <span className="w-2 h-2 rounded-full bg-red-600" />
             </div>
             <div className="text-lg font-black text-slate-900 mt-0.5">{stats.critical}</div>
-            <span className="text-[10px] text-slate-400">Score &ge; 80/100</span>
+            <span className="text-[10px] text-slate-400">{t('riskHeatmap.scoreGte80', 'Score ≥ 80/100')}</span>
           </button>
 
           <button
@@ -620,11 +622,11 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase text-amber-700">HIGH</span>
+              <span className="text-[10px] font-extrabold uppercase text-amber-700">{t('riskLevels.high', 'HIGH')}</span>
               <span className="w-2 h-2 rounded-full bg-amber-600" />
             </div>
             <div className="text-lg font-black text-slate-900 mt-0.5">{stats.high}</div>
-            <span className="text-[10px] text-slate-400">Score 60–79</span>
+            <span className="text-[10px] text-slate-400">{t('riskHeatmap.score6079', 'Score 60–79')}</span>
           </button>
 
           <button
@@ -636,11 +638,11 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase text-yellow-700">MODERATE</span>
+              <span className="text-[10px] font-extrabold uppercase text-yellow-700">{t('riskLevels.moderate', 'MODERATE')}</span>
               <span className="w-2 h-2 rounded-full bg-yellow-500" />
             </div>
             <div className="text-lg font-black text-slate-900 mt-0.5">{stats.moderate}</div>
-            <span className="text-[10px] text-slate-400">Score 30–59</span>
+            <span className="text-[10px] text-slate-400">{t('riskHeatmap.score3059', 'Score 30–59')}</span>
           </button>
 
           <button
@@ -652,11 +654,11 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase text-emerald-700">LOW</span>
+              <span className="text-[10px] font-extrabold uppercase text-emerald-700">{t('riskLevels.low', 'LOW')}</span>
               <span className="w-2 h-2 rounded-full bg-emerald-600" />
             </div>
             <div className="text-lg font-black text-slate-900 mt-0.5">{stats.low}</div>
-            <span className="text-[10px] text-slate-400">Score &lt; 30/100</span>
+            <span className="text-[10px] text-slate-400">{t('riskHeatmap.scoreLt30', 'Score < 30/100')}</span>
           </button>
 
           <button
@@ -668,11 +670,11 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase text-slate-500">UNAVAILABLE</span>
+              <span className="text-[10px] font-extrabold uppercase text-slate-500">{t('riskLevels.unavailable', 'UNAVAILABLE')}</span>
               <span className="w-2 h-2 rounded-full bg-slate-400" />
             </div>
             <div className="text-lg font-black text-slate-700 mt-0.5">{stats.unavailable}</div>
-            <span className="text-[10px] text-slate-400">No fake data</span>
+            <span className="text-[10px] text-slate-400">{t('riskHeatmap.noFakeData', 'No fake data')}</span>
           </button>
         </div>
       </div>
@@ -683,13 +685,13 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
         <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
           {/* State Dropdown */}
           <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs">
-            <span className="text-slate-400 font-bold text-[10px] uppercase">State:</span>
+            <span className="text-slate-400 font-bold text-[10px] uppercase">{t('common.state', 'State')}:</span>
             <select
               value={selectedStateFilter}
               onChange={(e) => setSelectedStateFilter(e.target.value)}
               className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer"
             >
-              <option value="ALL">All 8 NER States (130 Districts)</option>
+              <option value="ALL">{t('riskHeatmap.allNerStates', 'All 8 NER States (130 Districts)')}</option>
               {NER_STATES.map((st) => (
                 <option key={st} value={st}>
                   {st}
@@ -703,7 +705,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search district..."
+              placeholder={t('riskHeatmap.searchPlaceholder', 'Search district...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-400"
@@ -720,7 +722,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
               }}
               className="text-[11px] font-bold text-blue-600 hover:text-blue-700 underline cursor-pointer px-1"
             >
-              Reset Filters ({filteredPoints.length} shown)
+              {t('riskHeatmap.resetFilters', 'Reset Filters ({{count}} shown)', { count: filteredPoints.length })}
             </button>
           )}
         </div>
@@ -735,7 +737,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
                 mapStyle === 'carto' ? 'bg-white text-blue-600 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              GIS Light
+              {t('riskHeatmap.mapStyleGisLight', 'GIS Light')}
             </button>
             <button
               onClick={() => setMapStyle('terrain')}
@@ -743,7 +745,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
                 mapStyle === 'terrain' ? 'bg-white text-blue-600 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Topography
+              {t('riskHeatmap.mapStyleTopo', 'Topography')}
             </button>
             <button
               onClick={() => setMapStyle('satellite')}
@@ -751,7 +753,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
                 mapStyle === 'satellite' ? 'bg-white text-blue-600 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Satellite
+              {t('riskHeatmap.mapStyleSatellite', 'Satellite')}
             </button>
           </div>
 
@@ -766,7 +768,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             title="Toggle the entire AI-Assisted Estimated Landslide Risk GIS layer"
           >
             <span className={`w-2 h-2 rounded-full ${showRiskLayer ? 'bg-rose-600 animate-pulse' : 'bg-slate-400'}`} />
-            <span>Risk Layer: {showRiskLayer ? 'ON' : 'OFF'}</span>
+            <span>{t('riskHeatmap.riskLayer', 'Risk Layer')}: {showRiskLayer ? t('common.on', 'ON') : t('common.off', 'OFF')}</span>
           </button>
 
           {/* Heat Radius Toggle */}
@@ -780,7 +782,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
               }`}
               title="Toggle geographic influence radius zones"
             >
-              Heat Zones: {showRadiusRings ? 'ON' : 'OFF'}
+              {t('riskHeatmap.heatZones', 'Heat Zones')}: {showRadiusRings ? t('common.on', 'ON') : t('common.off', 'OFF')}
             </button>
           )}
         </div>
@@ -797,7 +799,7 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             <div className="flex items-center justify-between gap-2 mb-1">
               <span className="text-[10px] font-black uppercase text-blue-600 tracking-wider flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                Active Focus District
+                {t('riskHeatmap.activeDistrict', 'Active Focus District')}
               </span>
               <span className="text-[10px] text-slate-400 font-mono">
                 {selectedLocation.latitude.toFixed(2)}°N, {selectedLocation.longitude.toFixed(2)}°E
@@ -819,28 +821,28 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
           <button
             onClick={handleZoomIn}
             className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-lg border border-slate-200 shadow-xs transition-colors cursor-pointer"
-            title="Zoom In"
+            title={t('riskHeatmap.zoomIn', 'Zoom In')}
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
             onClick={handleZoomOut}
             className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-lg border border-slate-200 shadow-xs transition-colors cursor-pointer"
-            title="Zoom Out"
+            title={t('riskHeatmap.zoomOut', 'Zoom Out')}
           >
             <ZoomOut className="w-4 h-4" />
           </button>
           <button
             onClick={handleFitNer}
             className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-lg border border-slate-200 shadow-xs transition-colors cursor-pointer"
-            title="Fit Entire 8-State NER Region"
+            title={t('riskHeatmap.fitNer', 'Fit Entire 8-State NER Region')}
           >
             <Maximize2 className="w-4 h-4" />
           </button>
           <button
             onClick={handleFitSelected}
             className="p-2 bg-white/95 hover:bg-white text-blue-600 rounded-lg border border-slate-200 shadow-xs transition-colors cursor-pointer"
-            title="Recenter on Active Focus District"
+            title={t('riskHeatmap.recenter', 'Recenter on Active Focus District')}
           >
             <Compass className="w-4 h-4" />
           </button>
@@ -849,35 +851,35 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
         {/* Floating Bottom Left: Clear Standardized Risk Legend */}
         <div className="absolute bottom-3 left-3 z-[400] bg-white/95 backdrop-blur-md p-3 rounded-xl border border-slate-200/90 shadow-md max-w-xs text-xs">
           <div className="font-extrabold text-slate-900 text-[11px] mb-2 flex items-center justify-between">
-            <span className="uppercase tracking-wider">AI-Assisted Estimated Landslide Risk</span>
+            <span className="uppercase tracking-wider">{t('riskHeatmap.title', 'AI-Assisted Estimated Landslide Risk')}</span>
             <span className="text-[10px] text-slate-400 font-normal">NER GIS</span>
           </div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-red-600 border border-white shrink-0 shadow-2xs" />
-              <span className="font-bold text-slate-800">CRITICAL</span>
+              <span className="font-bold text-slate-800">{t('riskLevels.critical', 'CRITICAL')}</span>
               <span className="text-[10px] text-slate-400">&ge; 80</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-amber-600 border border-white shrink-0 shadow-2xs" />
-              <span className="font-bold text-slate-800">HIGH</span>
+              <span className="font-bold text-slate-800">{t('riskLevels.high', 'HIGH')}</span>
               <span className="text-[10px] text-slate-400">60–79</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-yellow-500 border border-white shrink-0 shadow-2xs" />
-              <span className="font-bold text-slate-800">MODERATE</span>
+              <span className="font-bold text-slate-800">{t('riskLevels.moderate', 'MODERATE')}</span>
               <span className="text-[10px] text-slate-400">30–59</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-emerald-600 border border-white shrink-0 shadow-2xs" />
-              <span className="font-bold text-slate-800">LOW</span>
+              <span className="font-bold text-slate-800">{t('riskLevels.low', 'LOW')}</span>
               <span className="text-[10px] text-slate-400">&lt; 30</span>
             </div>
           </div>
           <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
             <div className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded-full bg-slate-400 border border-white shrink-0" />
-              <span>Risk unavailable — insufficient data</span>
+              <span>{t('riskLevels.insufficientDataNotice', 'Risk unavailable — insufficient data')}</span>
             </div>
           </div>
         </div>
@@ -905,8 +907,8 @@ export const NerRiskHeatmap: React.FC<NerRiskHeatmapProps> = ({
             </div>
             <div className="text-[11px] text-slate-300 mt-1">
               {hoveredDistrict.status === 'READY'
-                ? `Score: ${hoveredDistrict.riskScore}/100 • Slope: ${hoveredDistrict.slopeDegrees ?? '—'}°`
-                : 'Risk data unavailable'}
+                ? `${t('riskHeatmap.score', 'Score')}: ${hoveredDistrict.riskScore}/100 • ${t('riskHeatmap.slope', 'Slope')}: ${hoveredDistrict.slopeDegrees ?? '—'}°`
+                : t('riskLevels.riskDataUnavailable', 'Risk data unavailable')}
             </div>
           </div>
         )}

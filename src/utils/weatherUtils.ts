@@ -105,3 +105,46 @@ export function formatDate(isoString: string): string {
     return isoString;
   }
 }
+
+export function getLocalizedWeatherCondition(
+  t: any,
+  codeOrCondition?: number | string,
+  fallbackCondition?: string
+): string {
+  let conditionStr = typeof codeOrCondition === 'string' ? codeOrCondition : '';
+  if (typeof codeOrCondition === 'number') {
+    conditionStr = getWeatherConditionByCode(codeOrCondition).condition;
+  } else if (!conditionStr && fallbackCondition) {
+    conditionStr = fallbackCondition;
+  }
+
+  if (!conditionStr) return t('weather.condition_fairWeather', 'Fair Weather');
+
+  const keyName = conditionStr
+    .toLowerCase()
+    .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase())
+    .replace(/[^a-zA-Z0-9]/g, '');
+
+  const i18nKey = `weather.condition_${keyName}`;
+  return t(i18nKey, conditionStr);
+}
+
+export function getLocalizedDayName(
+  t: any,
+  dayName: string
+): string {
+  if (!dayName) return '';
+  const clean = dayName.trim().slice(0, 3).toLowerCase();
+  const map: Record<string, string> = {
+    sun: 'weather.day_sun',
+    mon: 'weather.day_mon',
+    tue: 'weather.day_tue',
+    wed: 'weather.day_wed',
+    thu: 'weather.day_thu',
+    fri: 'weather.day_fri',
+    sat: 'weather.day_sat',
+    tod: 'weather.today',
+  };
+  const key = map[clean];
+  return key ? t(key, dayName) : dayName;
+}

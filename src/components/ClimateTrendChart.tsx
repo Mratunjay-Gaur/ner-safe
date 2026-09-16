@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrendingUp, Thermometer, Droplets, CloudRain } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -22,6 +23,7 @@ export const ClimateTrendChart: React.FC<ClimateTrendChartProps> = ({
   history,
   districtName,
 }) => {
+  const { t } = useTranslation();
   const [activeMetric, setActiveMetric] = useState<'temp' | 'precip' | 'humidity'>('temp');
 
   if (!history || history.length === 0) {
@@ -34,7 +36,7 @@ export const ClimateTrendChart: React.FC<ClimateTrendChartProps> = ({
         <div className="flex items-center gap-2">
           <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-            Past 48H Trend • {districtName}
+            {t('weather.past48hTrend', 'Past 48H Trend')} • {districtName}
           </h3>
         </div>
 
@@ -48,7 +50,7 @@ export const ClimateTrendChart: React.FC<ClimateTrendChartProps> = ({
                 : 'hover:text-slate-900'
             }`}
           >
-            Temp (°C)
+            {t('weather.tempTab', 'Temp (°C)')}
           </button>
           <button
             onClick={() => setActiveMetric('precip')}
@@ -58,7 +60,7 @@ export const ClimateTrendChart: React.FC<ClimateTrendChartProps> = ({
                 : 'hover:text-slate-900'
             }`}
           >
-            Rain (mm)
+            {t('weather.rainTab', 'Rain (mm)')}
           </button>
           <button
             onClick={() => setActiveMetric('humidity')}
@@ -68,7 +70,7 @@ export const ClimateTrendChart: React.FC<ClimateTrendChartProps> = ({
                 : 'hover:text-slate-900'
             }`}
           >
-            Humidity (%)
+            {t('weather.humidityTab', 'Humidity (%)')}
           </button>
         </div>
       </div>
@@ -87,7 +89,7 @@ export const ClimateTrendChart: React.FC<ClimateTrendChartProps> = ({
                     return (
                       <div className="bg-slate-900 text-white p-2 rounded-md text-[11px] shadow-md">
                         <p className="text-slate-400">{d.dateStr} {label}</p>
-                        <p className="font-bold text-blue-400">Precipitation: {d.precipitation} mm</p>
+                        <p className="font-bold text-blue-400">{t('weather.precipitation', 'Precipitation')}: {d.precipitation} mm</p>
                       </div>
                     );
                   }
@@ -115,9 +117,9 @@ export const ClimateTrendChart: React.FC<ClimateTrendChartProps> = ({
                       <div className="bg-slate-900 text-white p-2 rounded-md text-[11px] shadow-md">
                         <p className="text-slate-400">{d.dateStr} {label}</p>
                         {activeMetric === 'temp' ? (
-                          <p className="font-bold text-blue-400">Temperature: {d.temperature}°C</p>
+                          <p className="font-bold text-blue-400">{t('weather.temperature', 'Temperature')}: {d.temperature}°C</p>
                         ) : (
-                          <p className="font-bold text-sky-400">Humidity: {d.humidity}%</p>
+                          <p className="font-bold text-sky-400">{t('weather.humidity', 'Humidity')}: {d.humidity}%</p>
                         )}
                       </div>
                     );

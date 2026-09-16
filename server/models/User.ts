@@ -7,6 +7,7 @@ export interface IUser extends Document {
   name?: string;
   state?: string;
   district?: string;
+  preferredLanguage?: string;
   isVerified: boolean;
   emailVerified: boolean;
   emailVerifiedAt?: Date;
@@ -54,6 +55,12 @@ const UserSchema = new Schema<IUser>(
       trim: true,
       default: '',
     },
+    preferredLanguage: {
+      type: String,
+      trim: true,
+      default: 'en',
+      index: true,
+    },
     isVerified: {
       type: Boolean,
       default: false,
@@ -84,6 +91,7 @@ const UserSchema = new Schema<IUser>(
   {
     timestamps: true,
     collection: 'users',
+    strict: false,
   }
 );
 

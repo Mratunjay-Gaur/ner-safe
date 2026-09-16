@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import { MapPin, Layers, ZoomIn, ZoomOut, Compass, Navigation2 } from 'lucide-react';
 import { LocationItem } from '../types/weather';
@@ -13,6 +14,7 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
   selectedLocation,
   onSelectLocation,
 }) => {
+  const { t } = useTranslation();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -133,7 +135,7 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
     markerRef.current.bindPopup(
       `<div style="font-family: sans-serif; font-size: 12px; font-weight: bold; color: #0f172a;">
         ${selectedLocation.name}
-        <div style="font-size: 10px; color: #64748b; font-weight: normal;">${selectedLocation.state} • ${selectedLocation.isNer ? 'NER Station' : 'India'}</div>
+        <div style="font-size: 10px; color: #64748b; font-weight: normal;">${selectedLocation.state} • ${selectedLocation.isNer ? t('weather.nerStation', 'NER Station') : t('location.india', 'India')}</div>
        </div>`
     );
 
@@ -197,7 +199,7 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
         <div className="flex items-center gap-2">
           <Compass className="w-3.5 h-3.5 text-blue-600" />
           <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-            Atmospheric GIS Map
+            {t('gisMap.atmosphericGisMap', 'Atmospheric GIS Map')}
           </span>
         </div>
 
@@ -213,7 +215,7 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
                   : 'hover:text-slate-900'
               }`}
             >
-              NER Only
+              {t('gisMap.nerOnly', 'NER Only')}
             </button>
             <button
               onClick={() => handleScopeChange('india')}
@@ -223,7 +225,7 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
                   : 'hover:text-slate-900'
               }`}
             >
-              All India
+              {t('gisMap.allIndia', 'All India')}
             </button>
           </div>
 
@@ -233,9 +235,9 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
             onChange={(e) => setMapLayer(e.target.value as any)}
             className="text-[11px] font-semibold text-slate-700 bg-white border border-slate-200 rounded-md px-2 py-0.5 focus:outline-hidden cursor-pointer"
           >
-            <option value="carto">CartoDB</option>
-            <option value="terrain">Terrain</option>
-            <option value="osm">OSM</option>
+            <option value="carto">{t('gisMap.layerCarto', 'CartoDB')}</option>
+            <option value="terrain">{t('gisMap.layerTerrain', 'Terrain')}</option>
+            <option value="osm">{t('gisMap.layerOsm', 'OSM')}</option>
           </select>
         </div>
       </div>
@@ -246,7 +248,7 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
 
         {/* Floating Top-Left Overlay */}
         <div className="absolute top-2.5 left-2.5 z-10 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-md border border-slate-200 text-[11px] font-bold text-slate-800 shadow-2xs">
-          Focus: {mapScope === 'ner' ? 'North Eastern Region' : 'All India'} • {selectedLocation.name}
+          {t('gisMap.focus', 'Focus:')} {mapScope === 'ner' ? t('gisMap.northEasternRegion', 'North Eastern Region') : t('gisMap.allIndia', 'All India')} • {selectedLocation.name}
         </div>
 
         {/* Floating Zoom & Center overlay controls */}
@@ -254,14 +256,14 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
           <button
             onClick={() => mapInstanceRef.current?.zoomIn()}
             className="p-1 rounded text-slate-700 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
-            title="Zoom In"
+            title={t('gisMap.zoomIn', 'Zoom In')}
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => mapInstanceRef.current?.zoomOut()}
             className="p-1 rounded text-slate-700 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
-            title="Zoom Out"
+            title={t('gisMap.zoomOut', 'Zoom Out')}
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
@@ -272,7 +274,7 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
               }
             }}
             className="p-1 rounded text-blue-600 hover:bg-blue-50 cursor-pointer"
-            title="Center Active District"
+            title={t('gisMap.centerDistrict', 'Center Active District')}
           >
             <Navigation2 className="w-3.5 h-3.5" />
           </button>
@@ -282,11 +284,11 @@ export const IndiaNerMap: React.FC<IndiaNerMapProps> = ({
         <div className="absolute bottom-2.5 left-2.5 z-10 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-md border border-slate-200 text-[10px] shadow-2xs flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-slate-900" />
-            <span className="font-bold text-slate-800">Active Station</span>
+            <span className="font-bold text-slate-800">{t('gisMap.activeStation', 'Active Station')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-            <span className="text-slate-600">NER Hubs</span>
+            <span className="text-slate-600">{t('gisMap.nerHubs', 'NER Hubs')}</span>
           </div>
         </div>
       </div>

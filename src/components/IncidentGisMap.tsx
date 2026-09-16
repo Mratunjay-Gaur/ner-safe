@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import { Layers, ZoomIn, ZoomOut, Maximize2, MapPin, Eye, Radio, Compass, Flame, AlertTriangle, AlertOctagon, Info } from 'lucide-react';
 import { IncidentReportItem } from '../types/incident';
@@ -21,6 +22,7 @@ export const IncidentGisMap: React.FC<IncidentGisMapProps> = ({
   selectedPriorityItem,
   onSelectPriorityItem,
 }) => {
+  const { t } = useTranslation();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
@@ -454,7 +456,7 @@ export const IncidentGisMap: React.FC<IncidentGisMapProps> = ({
 
       {/* Top Left: Layer Selector & Priority Mode Switch */}
       <div className="absolute top-3 left-3 z-10 flex flex-wrap items-center gap-1.5 bg-white/95 backdrop-blur-xs p-1.5 rounded-lg border border-slate-200/80 shadow-xs text-xs font-semibold text-slate-700">
-        <span className="text-[10px] uppercase font-bold text-slate-400 px-1.5 hidden sm:inline">Mode:</span>
+        <span className="text-[10px] uppercase font-bold text-slate-400 px-1.5 hidden sm:inline">{t('gisMap.mode', 'Mode:')}</span>
         <button
           onClick={() => setDisplayMode('PRIORITY')}
           className={`px-2 py-1 rounded text-xs transition-colors cursor-pointer flex items-center gap-1 ${
@@ -462,7 +464,7 @@ export const IncidentGisMap: React.FC<IncidentGisMapProps> = ({
           }`}
         >
           <Flame className="w-3 h-3" />
-          <span>Priority Ranks ({priorityItems.length})</span>
+          <span>{t('gisMap.priorityRanks', 'Priority Ranks')} ({priorityItems.length})</span>
         </button>
         <button
           onClick={() => setDisplayMode('INCIDENTS')}
@@ -470,7 +472,7 @@ export const IncidentGisMap: React.FC<IncidentGisMapProps> = ({
             displayMode === 'INCIDENTS' ? 'bg-blue-600 text-white font-bold' : 'hover:bg-slate-100 text-slate-600'
           }`}
         >
-          Raw Incidents ({incidents.length})
+          {t('gisMap.rawIncidents', 'Raw Incidents')} ({incidents.length})
         </button>
 
         <span className="text-slate-300 mx-1">|</span>
@@ -481,7 +483,7 @@ export const IncidentGisMap: React.FC<IncidentGisMapProps> = ({
             mapLayer === 'carto' ? 'bg-slate-800 text-white font-bold' : 'hover:bg-slate-100 text-slate-600'
           }`}
         >
-          Carto
+          {t('gisMap.carto', 'Carto')}
         </button>
         <button
           onClick={() => setMapLayer('terrain')}
@@ -489,7 +491,7 @@ export const IncidentGisMap: React.FC<IncidentGisMapProps> = ({
             mapLayer === 'terrain' ? 'bg-slate-800 text-white font-bold' : 'hover:bg-slate-100 text-slate-600'
           }`}
         >
-          Topo
+          {t('gisMap.topo', 'Topo')}
         </button>
         <button
           onClick={() => setMapLayer('satellite')}
@@ -497,7 +499,7 @@ export const IncidentGisMap: React.FC<IncidentGisMapProps> = ({
             mapLayer === 'satellite' ? 'bg-slate-800 text-white font-bold' : 'hover:bg-slate-100 text-slate-600'
           }`}
         >
-          Sat
+          {t('gisMap.sat', 'Sat')}
         </button>
       </div>
 
@@ -505,21 +507,21 @@ export const IncidentGisMap: React.FC<IncidentGisMapProps> = ({
       <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
         <button
           onClick={handleZoomIn}
-          title="Zoom In"
+          title={t('gisMap.zoomIn', 'Zoom In')}
           className="p-2 bg-white/95 hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-200/80 shadow-xs transition-colors cursor-pointer"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
         <button
           onClick={handleZoomOut}
-          title="Zoom Out"
+          title={t('gisMap.zoomOut', 'Zoom Out')}
           className="p-2 bg-white/95 hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-200/80 shadow-xs transition-colors cursor-pointer"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
         <button
           onClick={handleFitAll}
-          title="Fit All Markers"
+          title={t('gisMap.fitAll', 'Fit All Markers')}
           className="p-2 bg-white/95 hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-200/80 shadow-xs transition-colors cursor-pointer"
         >
           <Maximize2 className="w-4 h-4" />
@@ -529,47 +531,47 @@ export const IncidentGisMap: React.FC<IncidentGisMapProps> = ({
       {/* Bottom Map Legend */}
       <div className="absolute bottom-3 left-3 z-10 bg-white/95 backdrop-blur-xs p-2.5 rounded-lg border border-slate-200/80 shadow-xs text-[11px] text-slate-600 hidden md:block max-w-xs">
         <div className="font-bold text-slate-900 text-xs mb-1.5 flex items-center justify-between">
-          <span>{displayMode === 'PRIORITY' ? 'Emergency Response Priority' : 'GIS Incident Types'}</span>
+          <span>{displayMode === 'PRIORITY' ? t('gisMap.legendPriority', 'Emergency Response Priority') : t('gisMap.legendIncidents', 'GIS Incident Types')}</span>
           <span className="text-[10px] font-normal text-slate-500">
-            {displayMode === 'PRIORITY' ? `${priorityItems.length} targets` : `${incidents.length} on map`}
+            {displayMode === 'PRIORITY' ? `${priorityItems.length} ${t('gisMap.targets', 'targets')}` : `${incidents.length} ${t('gisMap.onMap', 'on map')}`}
           </span>
         </div>
         {displayMode === 'PRIORITY' ? (
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse"></span>
-              <span className="font-bold text-slate-800">CRITICAL Target</span>
+              <span className="font-bold text-slate-800">{t('priority.criticalTarget', 'CRITICAL Target')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-              <span className="font-bold text-slate-800">HIGH Target</span>
+              <span className="font-bold text-slate-800">{t('priority.highTarget', 'HIGH Target')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-              <span className="text-slate-700">MEDIUM Target</span>
+              <span className="text-slate-700">{t('priority.mediumTarget', 'MEDIUM Target')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-              <span className="text-slate-700">LOW Target</span>
+              <span className="text-slate-700">{t('priority.lowTarget', 'LOW Target')}</span>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
-              <span>Landslide / Rock</span>
+              <span>{t('incidentTypes.landslideRock', 'Landslide / Rock')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-              <span>Ground Crack</span>
+              <span>{t('incidentTypes.groundCrack', 'Ground Crack')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
-              <span>Water Hazard</span>
+              <span>{t('incidentTypes.waterHazard', 'Water Hazard')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-orange-600"></span>
-              <span>Road Block</span>
+              <span>{t('incidentTypes.roadBlock', 'Road Block')}</span>
             </div>
           </div>
         )}

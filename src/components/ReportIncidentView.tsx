@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import {
   AlertTriangle,
@@ -20,6 +21,7 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { IncidentType, IncidentReportResponse } from '../types/incident';
+import { safeParseResponse } from '../utils/safeFetch';
 
 const INCIDENT_TYPES: { type: IncidentType; label: string; desc: string }[] = [
   { type: 'Landslide', label: 'Landslide', desc: 'Mass earth/debris flow or slope failure' },
@@ -32,6 +34,7 @@ const INCIDENT_TYPES: { type: IncidentType; label: string; desc: string }[] = [
 ];
 
 export const ReportIncidentView: React.FC = () => {
+  const { t } = useTranslation();
   // Form State
   const [incidentType, setIncidentType] = useState<IncidentType>('Landslide');
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -342,13 +345,18 @@ export const ReportIncidentView: React.FC = () => {
 
       const response = await fetch('/api/incidents', {
         method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
         body: formData,
       });
 
-      const result = await response.json();
+      const { data: result, ok: isParsedOk, error: parseErr } = await safeParseResponse<any>(response);
 
-      if (!response.ok) {
-        throw new Error(result.error || `Server responded with status ${response.status}`);
+      if (!response.ok || !isParsedOk || !result || result.success !== true || !result.reportId) {
+        throw new Error(
+          result?.message || result?.error || parseErr || `Failed to persist incident to MongoDB (status ${response.status})`
+        );
       }
 
       setSuccessReport(result);
@@ -386,7 +394,7 @@ export const ReportIncidentView: React.FC = () => {
       {isOffline && (
         <div className="mb-4 bg-amber-50 border border-amber-300 p-3.5 rounded-xl flex items-center gap-2.5 text-amber-900 text-xs font-bold shadow-2xs">
           <WifiOff className="w-4 h-4 text-amber-700 shrink-0" />
-          <span>Offline — connection unavailable. Network connectivity is required to upload media and submit reports.</span>
+          <span>{t('incident.offlineWarning', 'Offline — connection unavailable. Network connectivity is required to upload media and submit reports.')}</span>
         </div>
       )}
 
@@ -394,25 +402,25 @@ export const ReportIncidentView: React.FC = () => {
       <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-rose-600 text-white rounded-xl shadow-xs">
+            <div className="p-2.5 bg-rose-600 text-white rounded-xl shadow-xs shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                  Report Ground & Slope Incident
+                <h1 className="text-base font-black text-slate-900 tracking-tight">
+                  {t('incident.reportTitle', 'Report Ground & Slope Incident')}
                 </h1>
-                <span className="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-2 py-0.5 rounded">
+                <span className="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-2 py-0.5 rounded font-mono">
                   SIH26001
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Submit field observations with live GPS coordinates and photo/video evidence to MongoDB Atlas & Cloudinary.
+                {t('incident.reportSubtitle', 'Submit field observations with live GPS coordinates and photo/video evidence to MongoDB Atlas & Cloudinary.')}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto text-xs font-mono text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+          <div className="flex items-center gap-1.5 self-start sm:self-auto text-xs font-mono text-slate-600 bg-slate-50 px-2.5 py-1 rounded border border-slate-200">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
             <span>{formattedDate}</span>
           </div>
@@ -421,16 +429,16 @@ export const ReportIncidentView: React.FC = () => {
 
       {/* SUCCESS CONFIRMATION VIEW */}
       {successReport ? (
-        <div className="bg-white rounded-xl border border-emerald-200 p-6 shadow-xs space-y-6 animate-in fade-in duration-300">
+        <div className="bg-white rounded-xl border border-emerald-200 p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-300">
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full mb-1">
-              <CheckCircle2 className="w-8 h-8" />
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full mb-1 border border-emerald-200">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-black text-slate-900">
-              Incident Report Submitted Successfully
+            <h2 className="text-lg font-black text-slate-900 tracking-tight">
+              {t('incident.successTitle', 'Incident Report Submitted Successfully')}
             </h2>
             <p className="text-xs text-slate-500">
-              Your field report has been securely registered in the primary disaster database.
+              {t('incident.successSubtitle', 'Your field report has been securely registered in the primary disaster database.')}
             </p>
           </div>
 
@@ -439,43 +447,43 @@ export const ReportIncidentView: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Official Report ID
+                  {t('incident.officialReportId', 'Official Report ID')}
                 </span>
-                <span className="text-sm font-mono font-black text-slate-900">
+                <span className="text-sm font-mono font-extrabold text-slate-900">
                   {successReport.reportId}
                 </span>
               </div>
-              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-1 rounded-md border border-emerald-200">
-                STATUS: {successReport.status}
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-3 py-1 rounded-full border border-emerald-200 font-mono">
+                {t('incident.statusLabel', 'STATUS')}: {successReport.status}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Incident Type</span>
-                <span className="font-bold text-slate-800 text-xs mt-0.5 block">{successReport.incidentType}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('incident.incidentTypeLabel', 'Incident Type')}</span>
+                <span className="font-extrabold text-slate-800 text-xs mt-0.5 block">{successReport.incidentType}</span>
               </div>
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Submission Time</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('incident.submissionTimeLabel', 'Submission Time')}</span>
                 <span className="font-mono text-slate-800 text-xs mt-0.5 block">
                   {new Date(successReport.submittedAt).toLocaleString()}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">GPS Coordinates</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('incident.gpsCoordinatesLabel', 'GPS Coordinates')}</span>
                 <span className="font-mono font-bold text-slate-800 text-xs mt-0.5 block">
                   {successReport.latitude.toFixed(6)}°N, {successReport.longitude.toFixed(6)}°E
                 </span>
               </div>
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Location / Area</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('incident.locationAreaLabel', 'Location / Area')}</span>
                 <span className="font-medium text-slate-800 text-xs mt-0.5 block">{successReport.locationName}</span>
               </div>
             </div>
 
             <div className="pt-2 border-t border-slate-200">
-              <span className="text-[10px] font-bold text-slate-400 uppercase block">User Observation</span>
-              <p className="text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200 mt-1 leading-relaxed">
+              <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('incident.userObservationLabel', 'User Observation')}</span>
+              <p className="text-slate-700 bg-white p-3 rounded-xl border border-slate-200 mt-1 leading-relaxed">
                 {successReport.description}
               </p>
             </div>
@@ -483,17 +491,17 @@ export const ReportIncidentView: React.FC = () => {
             {/* Media Upload Verification */}
             {(successReport.photoUrls?.length > 0 || successReport.videoUrl) && (
               <div className="pt-2 border-t border-slate-200">
-                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">
-                  Stored Media Assets (Cloudinary)
+                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-2">
+                  {t('incident.storedMediaAssets', 'Stored Media Assets (Cloudinary)')}
                 </span>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {successReport.photoUrls?.map((url, idx) => (
                     <a
                       key={idx}
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group relative block w-20 h-20 rounded-lg overflow-hidden border border-slate-200 bg-slate-900"
+                      className="group relative block w-20 h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-900"
                     >
                       <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
                     </a>
@@ -503,10 +511,10 @@ export const ReportIncidentView: React.FC = () => {
                       href={successReport.videoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-2 bg-white rounded-lg border border-slate-200 text-xs font-bold text-blue-600 hover:bg-slate-50"
+                      className="flex items-center gap-2 px-3.5 py-2.5 bg-white rounded-xl border border-slate-200 text-xs font-bold text-sky-600 hover:bg-slate-50 shadow-2xs"
                     >
                       <Video className="w-4 h-4" />
-                      <span>View Uploaded Video</span>
+                      <span>{t('incident.viewVideo', 'View Uploaded Video')}</span>
                     </a>
                   )}
                 </div>
@@ -517,10 +525,10 @@ export const ReportIncidentView: React.FC = () => {
           <div className="flex justify-center">
             <button
               onClick={handleResetForm}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-xs font-extrabold rounded-lg shadow-xs hover:bg-slate-800 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-950 text-white text-xs font-extrabold rounded-xl shadow-xs hover:bg-slate-800 transition-all cursor-pointer btn-press"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>Submit Another Report</span>
+              <span>{t('incident.submitAnother', 'Submit Another Report')}</span>
             </button>
           </div>
         </div>
@@ -529,7 +537,7 @@ export const ReportIncidentView: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Error Banner */}
           {formError && (
-            <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-start gap-2">
+            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs flex items-start gap-2.5 shadow-2xs">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <div className="flex-1 font-medium">{formError}</div>
               <button
@@ -545,11 +553,11 @@ export const ReportIncidentView: React.FC = () => {
           {/* Section 1: Incident Type */}
           <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-3">
             <div>
-              <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 block">
-                1. Select Incident Type <span className="text-rose-600">*</span>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                {t('incident.step1Type', '1. Select Incident Type')} <span className="text-rose-600">*</span>
               </label>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Choose the primary hazard or geomorphological failure observed.
+                {t('incident.step1TypeDesc', 'Choose the primary hazard or geomorphological failure observed.')}
               </p>
             </div>
 
@@ -567,7 +575,7 @@ export const ReportIncidentView: React.FC = () => {
                         : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800'
                     }`}
                   >
-                    <div className="text-xs font-extrabold">{item.label}</div>
+                    <div className="text-xs font-bold">{t(`incident.types.${item.type}`, item.label)}</div>
                     <div
                       className={`text-[10px] mt-0.5 leading-tight line-clamp-2 ${
                         isSelected ? 'text-slate-300' : 'text-slate-500'
@@ -583,13 +591,13 @@ export const ReportIncidentView: React.FC = () => {
 
           {/* Section 2: Location & Interactive Pinning */}
           <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 block">
-                  2. Incident Location <span className="text-rose-600">*</span>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                  {t('incident.step2Location', '2. Incident Location')} <span className="text-rose-600">*</span>
                 </label>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Capture your current GPS position or click/drag the pin on the map to specify the exact point.
+                  {t('incident.step2LocationDesc', 'Capture your current GPS position or click/drag the pin on the map to specify the exact point.')}
                 </p>
               </div>
 
@@ -598,10 +606,10 @@ export const ReportIncidentView: React.FC = () => {
                 type="button"
                 onClick={handleCaptureCurrentLocation}
                 disabled={geoStatus === 'locating'}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs transition-colors cursor-pointer self-start sm:self-auto shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs transition-colors cursor-pointer self-start sm:self-auto shrink-0"
               >
                 <Crosshair className={`w-3.5 h-3.5 ${geoStatus === 'locating' ? 'animate-spin' : ''}`} />
-                <span>{geoStatus === 'locating' ? 'Detecting GPS...' : 'Use Current Location'}</span>
+                <span>{geoStatus === 'locating' ? t('incident.detectingGPS', 'Detecting GPS...') : t('incident.useCurrentLocation', 'Use Current Location')}</span>
               </button>
             </div>
 
@@ -610,7 +618,7 @@ export const ReportIncidentView: React.FC = () => {
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="font-bold">Location Permission Denied:</strong> {geoErrorMessage} Tap anywhere on the map below to place the pin manually.
+                  <strong className="font-bold">{t('incident.permDeniedTitle', 'Location Permission Denied:')}</strong> {geoErrorMessage} {t('incident.permDeniedTip', 'Tap anywhere on the map below to place the pin manually.')}
                 </div>
               </div>
             )}
@@ -618,7 +626,7 @@ export const ReportIncidentView: React.FC = () => {
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="font-bold">Location Error:</strong> {geoErrorMessage}
+                  <strong className="font-bold">{t('incident.locErrorTitle', 'Location Error:')}</strong> {geoErrorMessage}
                 </div>
               </div>
             )}
@@ -627,7 +635,7 @@ export const ReportIncidentView: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                  Latitude (°N) <span className="text-rose-600">*</span>
+                  {t('incident.latitudeLabel', 'Latitude (°N)')} <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="number"
@@ -639,13 +647,13 @@ export const ReportIncidentView: React.FC = () => {
                     setGeoStatus('manual');
                   }}
                   placeholder="e.g. 27.0980"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
                 />
               </div>
 
               <div>
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                  Longitude (°E) <span className="text-rose-600">*</span>
+                  {t('incident.longitudeLabel', 'Longitude (°E)')} <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="number"
@@ -657,29 +665,29 @@ export const ReportIncidentView: React.FC = () => {
                     setGeoStatus('manual');
                   }}
                   placeholder="e.g. 93.6320"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
                 />
               </div>
 
               <div>
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                  Location / Route / Landmark
+                  {t('incident.routeLandmarkLabel', 'Location / Route / Landmark')}
                 </label>
                 <input
                   type="text"
                   value={locationName}
                   onChange={(e) => setLocationName(e.target.value)}
                   placeholder="e.g. NH-415 near Naharlagun"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
                 />
               </div>
             </div>
 
             {/* Interactive Mini-Map */}
-            <div className="relative rounded-lg overflow-hidden border border-slate-300 h-64 bg-slate-100">
+            <div className="relative rounded-xl overflow-hidden border border-slate-200 h-64 bg-slate-100">
               <div ref={mapContainerRef} className="w-full h-full" />
-              <div className="absolute top-2 left-2 z-1000 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded text-[10px] font-bold text-slate-700 border border-slate-200 shadow-2xs">
-                Tap map to place/adjust pin
+              <div className="absolute top-2 left-2 z-1000 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-md text-[10px] font-bold text-slate-700 border border-slate-200 shadow-2xs">
+                {t('incident.tapMapTip', 'Tap map to place/adjust pin')}
               </div>
             </div>
           </div>
@@ -689,11 +697,11 @@ export const ReportIncidentView: React.FC = () => {
             {/* Photo Capture & Upload */}
             <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-3">
               <div>
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 block">
-                  3. Incident Photo Evidence
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                  {t('incident.step3Photo', '3. Incident Photo Evidence')}
                 </label>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Take or upload a clear photo of the landslide/crack (max 20MB).
+                  {t('incident.step3PhotoDesc', 'Take or upload a clear photo of the landslide/crack (max 20MB).')}
                 </p>
               </div>
 
@@ -708,7 +716,7 @@ export const ReportIncidentView: React.FC = () => {
               />
 
               {photoPreview ? (
-                <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-slate-900 h-44 group">
+                <div className="relative rounded-xl overflow-hidden border border-slate-300 bg-slate-900 h-44 group">
                   <img src={photoPreview} alt="Incident preview" className="w-full h-full object-contain" />
                   <div className="absolute top-2 right-2 flex items-center gap-1.5">
                     <button
@@ -716,7 +724,7 @@ export const ReportIncidentView: React.FC = () => {
                       onClick={() => photoInputRef.current?.click()}
                       className="px-2 py-1 bg-slate-900/80 hover:bg-slate-900 text-white text-[10px] font-bold rounded cursor-pointer"
                     >
-                      Replace
+                      {t('incident.replace', 'Replace')}
                     </button>
                     <button
                       type="button"
@@ -731,11 +739,13 @@ export const ReportIncidentView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => photoInputRef.current?.click()}
-                  className="w-full h-36 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-lg flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-slate-700 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="w-full h-36 border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-blue-600 bg-slate-50/50 hover:bg-blue-50/20 transition-all cursor-pointer"
                 >
-                  <Camera className="w-6 h-6 text-slate-400" />
+                  <div className="p-2.5 rounded-full bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                    <Camera className="w-5 h-5" />
+                  </div>
                   <div className="text-center">
-                    <span className="text-xs font-bold block">Take Photo / Upload Image</span>
+                    <span className="text-xs font-bold block">{t('incident.takePhoto', 'Take Photo / Upload Image')}</span>
                     <span className="text-[10px] text-slate-400">JPG, PNG, WEBP</span>
                   </div>
                 </button>
@@ -745,11 +755,11 @@ export const ReportIncidentView: React.FC = () => {
             {/* Video Capture & Upload */}
             <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-3">
               <div>
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 block">
-                  4. Incident Video Evidence
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                  {t('incident.step4Video', '4. Incident Video Evidence')}
                 </label>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Record or upload a short clip of slope or road condition (max 35MB).
+                  {t('incident.step4VideoDesc', 'Record or upload a short clip of slope or road condition (max 35MB).')}
                 </p>
               </div>
 
@@ -764,7 +774,7 @@ export const ReportIncidentView: React.FC = () => {
               />
 
               {videoPreview ? (
-                <div className="relative rounded-lg overflow-hidden border border-slate-300 bg-slate-900 h-44">
+                <div className="relative rounded-xl overflow-hidden border border-slate-300 bg-slate-900 h-44">
                   <video src={videoPreview} controls className="w-full h-full object-contain" />
                   <div className="absolute top-2 right-2 flex items-center gap-1.5">
                     <button
@@ -772,7 +782,7 @@ export const ReportIncidentView: React.FC = () => {
                       onClick={() => videoInputRef.current?.click()}
                       className="px-2 py-1 bg-slate-900/80 hover:bg-slate-900 text-white text-[10px] font-bold rounded cursor-pointer"
                     >
-                      Replace
+                      {t('incident.replace', 'Replace')}
                     </button>
                     <button
                       type="button"
@@ -787,11 +797,13 @@ export const ReportIncidentView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => videoInputRef.current?.click()}
-                  className="w-full h-36 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-lg flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-slate-700 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="w-full h-36 border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-blue-600 bg-slate-50/50 hover:bg-blue-50/20 transition-all cursor-pointer"
                 >
-                  <Video className="w-6 h-6 text-slate-400" />
+                  <div className="p-2.5 rounded-full bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                    <Video className="w-5 h-5" />
+                  </div>
                   <div className="text-center">
-                    <span className="text-xs font-bold block">Record Video / Upload Clip</span>
+                    <span className="text-xs font-bold block">{t('incident.recordVideo', 'Record Video / Upload Clip')}</span>
                     <span className="text-[10px] text-slate-400">MP4, WEBM, MOV</span>
                   </div>
                 </button>
@@ -800,13 +812,13 @@ export const ReportIncidentView: React.FC = () => {
           </div>
 
           {/* Section 5 & 6: Description & Automatic Date */}
-          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-4">
+          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-3">
             <div>
-              <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 block">
-                5. Incident Description & Field Notes <span className="text-rose-600">*</span>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                {t('incident.step5Desc', '5. Incident Description & Field Notes')} <span className="text-rose-600">*</span>
               </label>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Describe the extent of the failure, affected road stretches, or immediate dangers.
+                {t('incident.step5DescHelp', 'Describe the extent of the failure, affected road stretches, or immediate dangers.')}
               </p>
             </div>
 
@@ -814,40 +826,40 @@ export const ReportIncidentView: React.FC = () => {
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Major debris blockage spanning 30 meters on the uphill lane. Active soil sliding observed during heavy rainfall."
-              className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 leading-relaxed"
+              placeholder={t('incident.descPlaceholder', 'e.g. Major debris blockage spanning 30 meters on the uphill lane. Active soil sliding observed during heavy rainfall.')}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 leading-relaxed"
             />
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
               <div className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
-                <span>Automatic Submission Timestamp: <strong>{formattedDate}</strong></span>
+                <span>{t('incident.autoTimestamp', 'Automatic Submission Timestamp:')} <strong>{formattedDate}</strong></span>
               </div>
               <span className="font-mono text-slate-400">Target: MongoDB Atlas + Cloudinary</span>
             </div>
           </div>
 
           {/* Section 7: Submit Action */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl p-5 border border-slate-200 shadow-2xs">
             <div className="flex items-center gap-2 text-xs text-slate-600">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Report will be cataloged with verified GPS coordinates and immutable timestamp.</span>
+              <span>{t('incident.catalogNotice', 'Report will be cataloged with verified GPS coordinates and immutable timestamp.')}</span>
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting || isOffline}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white text-xs font-extrabold rounded-lg shadow-sm transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white text-xs font-bold rounded-lg shadow-2xs transition-colors cursor-pointer"
             >
               {isSubmitting ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                  <span>Uploading Media & Submitting...</span>
+                  <span>{t('incident.submitting', 'Uploading Media & Submitting...')}</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
-                  <span>Submit Incident Report</span>
+                  <Send className="w-4 h-4 text-blue-400" />
+                  <span>{t('incident.submitReport', 'Submit Incident Report')}</span>
                 </>
               )}
             </button>

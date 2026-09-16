@@ -1,0 +1,42 @@
+[
+  {
+    "id": "68c5b7a1e42f9d3c7b1a5e84",
+    "_id": "68c5b7a1e42f9d3c7b1a5e84",
+    "email": "sajidali20071901@gmail.com",
+    "phone": "7003149118",
+    "phoneNumber": "7003149118",
+    "name": "Sajid Ali Ansari",
+    "state": "Nagaland",
+    "district": "Noklak District",
+    "isVerified": true,
+    "emailVerified": true,
+    "emailVerifiedAt": "2026-09-13T00:00:00.000Z",
+    "phoneVerified": true,
+    "phoneVerifiedAt": "2026-09-13T00:00:00.000Z",
+    "verifiedAt": "2026-09-13T00:00:00.000Z",
+    "createdAt": "2026-09-13T00:00:00.000Z",
+    "updatedAt": "2026-09-14T15:40:20.379Z",
+    "syncPending": false,
+    "preferredLanguage": "en"
+  },
+  {
+    "id": "6aa5545c5208ed99938a76af",
+    "_id": "6aa5545c5208ed99938a76af",
+    "email": "gaurxmratunjay@gmail.com",
+    "phone": "9214211711",
+    "phoneNumber": "9214211711",
+    "name": "Mratunjay Gaur",
+    "state": "Assam",
+    "district": "Kamrup Metropolitan",
+    "preferredLanguage": "as",
+    "isVerified": true,
+    "emailVerified": true,
+    "emailVerifiedAt": "2026-09-12T13:32:12.015Z",
+    "phoneVerified": true,
+    "phoneVerifiedAt": "2026-09-12T13:32:12.015Z",
+    "verifiedAt": "2026-09-12T13:32:12.015Z",
+    "createdAt": "2026-09-12T13:32:12.015Z",
+    "updatedAt": "2026-09-16T03:51:00.049Z",
+    "syncPending": false
+  }
+]

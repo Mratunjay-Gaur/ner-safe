@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AlertOctagon,
   ShieldAlert,
@@ -34,6 +35,8 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
   onOpenIncidentDetail,
   allDistricts,
 }) => {
+  const { t } = useTranslation();
+
   // Filter States
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [districtFilter, setDistrictFilter] = useState<string>('All Districts');
@@ -143,15 +146,15 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-extrabold tracking-wider uppercase">
-                  Emergency Response Priority
+                  {t('emergency.title', 'Emergency Response Priority')}
                 </h2>
                 <span className="bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-                  FIRST ATTENTION RANKING
+                  {t('emergency.firstAttentionBadge', 'FIRST ATTENTION RANKING')}
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                Ranks locations authorities should inspect <strong>FIRST</strong> based on real AI risk scores, verified field reports, terrain slope, and lifeline roads.
+                {t('emergency.desc', 'Ranks locations authorities should inspect FIRST based on real AI risk scores, verified field reports, terrain slope, and lifeline roads.')}
               </p>
             </div>
           </div>
@@ -162,7 +165,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
               <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
               <div>
                 <span className="text-[10px] text-rose-300 font-bold uppercase tracking-wider block">
-                  Top Priority Target (Action First)
+                  {t('emergency.topPriorityAction', 'Top Priority Target (Action First)')}
                 </span>
                 <span className="font-bold text-white line-clamp-1">
                   {topItem.locationName} ({topItem.priorityLevel})
@@ -179,32 +182,32 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
           {/* Filter: Priority */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
-              Priority Filter
+              {t('emergency.priorityFilter', 'Priority Filter')}
             </label>
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
               className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
-              <option value="ALL">All Priorities ({priorityItems.length})</option>
-              <option value="CRITICAL">🔴 CRITICAL Priority</option>
-              <option value="HIGH">🟠 HIGH Priority</option>
-              <option value="MEDIUM">🟡 MEDIUM Priority</option>
-              <option value="LOW">🔵 LOW Priority</option>
+              <option value="ALL">{t('emergency.allPriorities', 'All Priorities')} ({priorityItems.length})</option>
+              <option value="CRITICAL">🔴 {t('emergency.criticalPriority', 'CRITICAL Priority')}</option>
+              <option value="HIGH">🟠 {t('emergency.highPriority', 'HIGH Priority')}</option>
+              <option value="MEDIUM">🟡 {t('emergency.mediumPriority', 'MEDIUM Priority')}</option>
+              <option value="LOW">🔵 {t('emergency.lowPriority', 'LOW Priority')}</option>
             </select>
           </div>
 
           {/* Filter: District */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
-              District Filter
+              {t('emergency.districtFilter', 'District Filter')}
             </label>
             <select
               value={districtFilter}
               onChange={(e) => setDistrictFilter(e.target.value)}
               className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
-              <option value="All Districts">All NER Districts</option>
+              <option value="All Districts">{t('emergency.allDistrictsOption', 'All NER Districts')}</option>
               {allDistricts.map((d) => (
                 <option key={d} value={d}>
                   {d}
@@ -216,16 +219,16 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
           {/* Filter: Incident Type */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
-              Hazard / Incident Type
+              {t('emergency.hazardFilter', 'Hazard / Incident Type')}
             </label>
             <select
               value={incidentTypeFilter}
               onChange={(e) => setIncidentTypeFilter(e.target.value)}
               className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
-              {incidentTypes.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              {incidentTypes.map((itType) => (
+                <option key={itType} value={itType}>
+                  {itType === 'All Types' ? t('emergency.allTypesOption', 'All Types') : itType}
                 </option>
               ))}
             </select>
@@ -234,7 +237,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
           {/* Search Box */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
-              Search Roads / Location
+              {t('emergency.searchRoadsLabel', 'Search Roads / Location')}
             </label>
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
@@ -242,7 +245,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="NH-29, Haflong, bypass..."
+                placeholder={t('emergency.searchPlaceholder', 'NH-29, Haflong, bypass...')}
                 className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
               />
             </div>
@@ -253,8 +256,8 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
       {/* 3. Priority Ranked List */}
       <div className="divide-y divide-slate-100 max-h-[520px] overflow-y-auto">
         {filteredItems.length === 0 ? (
-          <div className="py-10 text-center text-slate-500 text-xs">
-            No emergency response priority items match the current filters.
+          <div className="py-10 text-center text-slate-500 text-xs font-medium">
+            {t('emergency.noPriorityRecords', 'No live data available. No priority incident records found in MongoDB.')}
           </div>
         ) : (
           filteredItems.map((item, index) => {
@@ -295,7 +298,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${style.badgeBg}`}
                       >
                         {style.icon}
-                        <span>{item.priorityLevel} PRIORITY</span>
+                        <span>{item.priorityLevel} {t('emergency.priorityTag', 'PRIORITY')}</span>
                       </span>
 
                       {item.incidentType && (
@@ -305,7 +308,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
                       )}
 
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                        Status: <strong className="text-slate-900">{item.status.replace(/_/g, ' ')}</strong>
+                        {t('common.status', 'Status')}: <strong className="text-slate-900">{item.status.replace(/_/g, ' ')}</strong>
                       </span>
 
                       <span className="text-[10px] text-slate-400 flex items-center gap-1 ml-auto sm:ml-0">
@@ -331,7 +334,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
                     {/* Main Reason (Which location should authorities look at FIRST and WHY) */}
                     <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs">
                       <span className="text-[10px] font-black uppercase text-slate-500 block mb-0.5">
-                        Priority Rationale (Why Authorities Should Inspect):
+                        {t('emergency.rationaleHeader', 'Priority Rationale (Why Authorities Should Inspect):')}
                       </span>
                       <p className="text-slate-800 font-medium leading-relaxed">
                         {item.mainReason}
@@ -343,7 +346,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
                       {/* Affected Roads */}
                       <div className="flex items-center gap-1.5 text-slate-700">
                         <Route className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                        <span className="font-semibold">Affected Road(s):</span>
+                        <span className="font-semibold">{t('emergency.affectedRoads', 'Affected Road(s):')}</span>
                         <span className="font-mono text-slate-900">
                           {item.affectedRoads.join(', ')}
                         </span>
@@ -353,7 +356,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
                       {item.nearbyInfrastructureOrVillage && (
                         <div className="flex items-center gap-1.5 text-slate-700">
                           <Building2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                          <span className="font-semibold">Infrastructure:</span>
+                          <span className="font-semibold">{t('emergency.infrastructure', 'Infrastructure:')}</span>
                           <span className="text-slate-900 line-clamp-1">
                             {item.nearbyInfrastructureOrVillage}
                           </span>
@@ -366,7 +369,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
                   <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
                     <div className="text-right">
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        Risk Score
+                        {t('emergency.riskScoreLabel', 'Risk Score')}
                       </div>
                       <div className="flex items-baseline gap-1">
                         <span className="text-xl font-black text-slate-900">
@@ -389,7 +392,7 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
                       }}
                       className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-2xs"
                     >
-                      <span>Inspect Details</span>
+                      <span>{t('emergency.inspectDetailsBtn', 'Inspect Details')}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -403,10 +406,10 @@ export const EmergencyResponsePrioritySection: React.FC<EmergencyResponsePriorit
       {/* 4. Footer Note */}
       <div className="p-2.5 bg-slate-100 text-[10px] text-slate-500 flex items-center justify-between border-t border-slate-200">
         <span>
-          Showing {filteredItems.length} priority-ranked response targets across 8 NER states
+          {t('emergency.showingCount', 'Showing {{count}} priority-ranked response targets across 8 NER states', { count: filteredItems.length })}
         </span>
         <span className="font-semibold text-slate-600">
-          Ranked strictly by combined hazard severity, verification status, and lifeline exposure
+          {t('emergency.footerRankingNote', 'Ranked strictly by combined hazard severity, verification status, and lifeline exposure')}
         </span>
       </div>
     </div>

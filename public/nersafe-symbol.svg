@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="100%" height="100%">
+  <defs>
+    <linearGradient id="symRiverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d4ed8" />
+      <stop offset="50%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <linearGradient id="symRiverWave" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#dbeafe" stop-opacity="0.95" />
+    </linearGradient>
+    <linearGradient id="symMountainDark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#14532d" />
+      <stop offset="100%" stop-color="#15803d" />
+    </linearGradient>
+    <linearGradient id="symSlopeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#92400e" />
+      <stop offset="60%" stop-color="#78350f" />
+      <stop offset="100%" stop-color="#542807" />
+    </linearGradient>
+    <linearGradient id="symCloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+    <clipPath id="symCircleClip">
+      <circle cx="160" cy="160" r="130" />
+    </clipPath>
+  </defs>
+
+  <!-- Outer Radar Waves (Top Left) -->
+  <path d="M 92 52 A 124 124 0 0 1 160 36" fill="none" stroke="#15803d" stroke-width="8" stroke-linecap="round" />
+  <path d="M 72 76 A 144 144 0 0 1 160 16" fill="none" stroke="#16a34a" stroke-width="8" stroke-linecap="round" />
+  <path d="M 54 104 A 164 164 0 0 1 160 -4" fill="none" stroke="#15803d" stroke-width="8" stroke-linecap="round" />
+
+  <!-- Main Circle -->
+  <g clip-path="url(#symCircleClip)">
+    <circle cx="160" cy="160" r="130" fill="#ffffff" />
+
+    <!-- Mountain Peaks -->
+    <polygon points="32,290 100,150 152,235 125,290" fill="url(#symMountainDark)" />
+    <polygon points="85,290 148,120 225,245 180,290" fill="#15803d" />
+    <polygon points="160,270 200,170 252,260" fill="#166534" />
+
+    <!-- Mountain Snow Caps -->
+    <polygon points="100,150 86,177 95,173 101,183 109,174 114,177" fill="#ffffff" />
+    <polygon points="148,120 130,161 139,155 146,168 155,154 166,163 162,148" fill="#ffffff" />
+
+    <!-- Landslide Cliff / Brown Slope -->
+    <path d="M 270 125 Q 225 180 207 225 Q 193 260 180 295 L 295 295 L 295 125 Z" fill="url(#symSlopeGrad)" />
+
+    <!-- Tumbling Landslide Rocks -->
+    <polygon points="212,180 224,175 228,187 218,194 209,189" fill="#78350f" stroke="#451a03" stroke-width="1.2" />
+    <polygon points="230,196 242,191 246,201 236,208 227,204" fill="#854d0e" stroke="#542807" stroke-width="1.2" />
+    <polygon points="196,211 205,206 211,217 203,224 193,219" fill="#92400e" stroke="#451a03" stroke-width="1.2" />
+    <polygon points="216,225 227,219 232,229 223,237 212,232" fill="#78350f" stroke="#3b1704" stroke-width="1.2" />
+    <polygon points="184,241 196,236 201,247 191,255 181,249" fill="#854d0e" stroke="#542807" stroke-width="1.2" />
+
+    <!-- Flowing River -->
+    <path d="M 144,215 Q 171,224 153,240 Q 117,255 81,269 Q 54,282 50,292 L 243,292 Q 216,265 193,242 Q 171,228 153,215 Z" fill="url(#symRiverGrad)" />
+    <path d="M 146 222 Q 167 231 151 244 Q 121 258 90 272 Q 70 282 63 292" fill="none" stroke="url(#symRiverWave)" stroke-width="5" stroke-linecap="round" />
+    <path d="M 164 233 Q 148 246 126 260 Q 103 274 94 287" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.9" stroke-linecap="round" />
+
+    <!-- Rain Cloud -->
+    <g transform="translate(176, 70)">
+      <path d="M 18 40 L 76 40 A 16 16 0 0 0 76 8 A 21 21 0 0 0 38 0 A 18 18 0 0 0 18 20 A 14 14 0 0 0 18 40 Z" fill="url(#symCloudGrad)" />
+      <line x1="28" y1="46" x2="19" y2="67" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" />
+      <line x1="46" y1="46" x2="37" y2="67" stroke="#0284c7" stroke-width="5" stroke-linecap="round" />
+      <line x1="64" y1="46" x2="55" y2="67" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" />
+    </g>
+
+    <!-- Outer Circular Border Accent -->
+    <circle cx="160" cy="160" r="129" fill="none" stroke="#15803d" stroke-width="5" />
+  </g>
+</svg>

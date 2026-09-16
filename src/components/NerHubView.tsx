@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LocationItem, WeatherResponse } from '../types/weather';
 import { DistrictEnvironmentalProfile, HistoricalLandslideRecord } from '../types/environmental';
 import { fetchDistrictEnvironmentalProfile } from '../services/environmentalService';
-import { fetchDistrictWeather } from '../services/weatherService';
 import { NerStateDistrictSelector } from './NerStateDistrictSelector';
 import { NerEnvironmentalOverview } from './NerEnvironmentalOverview';
 import { NerEnvironmentalMap } from './NerEnvironmentalMap';
 import { NerHistoricalLandslidesList } from './NerHistoricalLandslidesList';
 import { NerDataSourcesAudit } from './NerDataSourcesAudit';
-import { Loader2, RefreshCw, Layers, AlertTriangle, X, MapPin, Calendar, FileText } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 
 interface NerHubViewProps {
   selectedLocation: LocationItem;
@@ -21,6 +21,7 @@ export const NerHubView: React.FC<NerHubViewProps> = ({
   onSelectLocation,
   weatherData,
 }) => {
+  const { t } = useTranslation();
   const [environmentalData, setEnvironmentalData] = useState<DistrictEnvironmentalProfile | null>(null);
   const [isLoadingEnv, setIsLoadingEnv] = useState<boolean>(true);
   const [selectedLandslide, setSelectedLandslide] = useState<HistoricalLandslideRecord | null>(null);
@@ -83,7 +84,7 @@ export const NerHubView: React.FC<NerHubViewProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-extrabold uppercase bg-red-100 text-red-800 px-1.5 py-0.5 rounded">
-                    Selected Historical Incident
+                    {t('nerHub.selectedIncidentTitle', 'Selected Historical Incident')}
                   </span>
                   <span className="text-xs font-bold text-slate-900">
                     {selectedLandslide.locationName} ({selectedLandslide.district}, {selectedLandslide.state})
@@ -93,13 +94,13 @@ export const NerHubView: React.FC<NerHubViewProps> = ({
                   {selectedLandslide.impactDescription}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 mt-2">
-                  <span><strong>Date:</strong> {selectedLandslide.date}</span>
+                  <span><strong>{t('common.date', 'Date')}:</strong> {selectedLandslide.date}</span>
                   <span>•</span>
-                  <span><strong>Trigger:</strong> {selectedLandslide.trigger}</span>
+                  <span><strong>{t('nerHub.trigger', 'Trigger')}:</strong> {selectedLandslide.trigger}</span>
                   <span>•</span>
-                  <span><strong>Source:</strong> {selectedLandslide.catalogSource} ({selectedLandslide.sourceReferenceId})</span>
+                  <span><strong>{t('nerHub.sourceRef', 'Source')}:</strong> {selectedLandslide.catalogSource} ({selectedLandslide.sourceReferenceId})</span>
                   <span>•</span>
-                  <span className="font-mono"><strong>Coordinates:</strong> {selectedLandslide.latitude.toFixed(4)}°N, {selectedLandslide.longitude.toFixed(4)}°E</span>
+                  <span className="font-mono"><strong>{t('nerHub.coordinatesLabel', 'Coordinates')}:</strong> {selectedLandslide.latitude.toFixed(4)}°N, {selectedLandslide.longitude.toFixed(4)}°E</span>
                 </div>
               </div>
             </div>
