@@ -15,6 +15,7 @@ import {
   Settings,
   Info,
   ChevronRight,
+  CloudRain,
 } from 'lucide-react';
 
 export const GLOBAL_MOUNTAIN_BG_URL =
@@ -192,6 +193,23 @@ export const Footer: React.FC<FooterProps> = ({
                   <span className="flex items-center gap-2">
                     <ShieldAlert className="w-3 h-3 text-slate-400 group-hover:text-amber-300 transition-colors" />
                     {t('nav.riskMonitor', 'Risk Monitor')}
+                  </span>
+                  <ChevronRight className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleLinkClick('cross-border')}
+                  className={`w-full text-left py-1 px-2 rounded-lg transition-colors flex items-center justify-between group cursor-pointer ${
+                    activeTab === 'cross-border'
+                      ? 'text-rose-300 font-semibold bg-white/10'
+                      : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <CloudRain className="w-3 h-3 text-slate-400 group-hover:text-rose-300 transition-colors" />
+                    {t('nav.crossBorder', 'Cross-Border Weather')}
                   </span>
                   <ChevronRight className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>

@@ -17,6 +17,7 @@ import {
   UserPlus,
   Radio,
   Info,
+  CloudRain,
 } from 'lucide-react';
 import { AppTabType } from './Header';
 import {
@@ -268,6 +269,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
                 {isMainActive('risk-monitor') && (
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                )}
+              </button>
+
+              <button
+                id="sidebar-nav-cross-border"
+                onClick={() => handleNavClick('cross-border')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-medium transition-all cursor-pointer text-left group ${
+                  isMainActive('cross-border')
+                    ? 'bg-rose-500/15 text-white font-bold border border-rose-500/40 shadow-[0_0_16px_rgba(244,63,94,0.18)]'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-1 rounded-lg ${isMainActive('cross-border') ? 'bg-rose-500 text-white' : 'bg-slate-800/80 text-rose-400 group-hover:bg-slate-800'}`}>
+                    <CloudRain className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs">{t('nav.crossBorder', 'Cross-Border Weather')}</span>
+                </div>
+                {isMainActive('cross-border') && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
                 )}
               </button>
 

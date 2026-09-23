@@ -15,6 +15,7 @@ import { ClimateTrendChart } from './components/ClimateTrendChart';
 import { Footer } from './components/Footer';
 import { NerHubView } from './components/NerHubView';
 import { RiskMonitorView } from './components/RiskMonitorView';
+import { CrossBorderWeatherView } from './components/CrossBorderWeatherView';
 import { ReportIncidentView } from './components/ReportIncidentView';
 import { IncidentMonitoringConsole } from './components/IncidentMonitoringConsole';
 import { AboutView } from './components/AboutView';
@@ -46,6 +47,7 @@ const OPERATIONAL_TABS: AppTabType[] = [
   'live-monitor',
   'ner-hub',
   'risk-monitor',
+  'cross-border',
   'atmospheric-gis',
   'incident-monitor',
   'report-incident',
@@ -244,6 +246,11 @@ export default function App() {
             onSelectLocation={handleSelectLocation}
             weatherData={weatherData}
           />
+        )}
+
+        {/* TAB: Cross-Border Weather & Transboundary Early Warning (Strictly 5 Bordering Countries) */}
+        {currentDisplayTab === 'cross-border' && (
+          <CrossBorderWeatherView />
         )}
 
         {/* TAB 2: Live Monitor View (National Disaster Command Center Home View) */}

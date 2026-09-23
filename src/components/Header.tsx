@@ -15,6 +15,7 @@ export type AppTabType =
   | 'live-monitor'
   | 'ner-hub'
   | 'risk-monitor'
+  | 'cross-border'
   | 'atmospheric-gis'
   | 'incident-monitor'
   | 'report-incident'

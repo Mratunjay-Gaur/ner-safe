@@ -80,6 +80,7 @@ export const en = {
     "liveMonitor": "Live Monitor",
     "nerHub": "8-State NER Hub",
     "riskMonitor": "Risk Monitor",
+    "crossBorder": "Cross-Border Weather",
     "gisMonitor": "Monitor (GIS)",
     "incidentMonitor": "Authority Incident Monitor",
     "reportIncident": "Report Incident",
