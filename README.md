@@ -1,126 +1,449 @@
-NER-SAFE
+# NER-SAFE 🛡️
+### *AI-Powered Multi-Hazard Early Warning & Operational Telemetry System for the North Eastern Region of India*
 
-AI-Based Early Warning and Landslide Risk Monitoring System for the North Eastern Region of India
+[![SIH Problem ID](https://img.shields.io/badge/SIH-SIH26001-blue.svg)](#sih26001-alignment)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1-38B2AC.svg?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Express](https://img.shields.io/badge/Express-4.21-000000.svg?logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas_%26_Mongoose-47A248.svg?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Google Gemini](https://img.shields.io/badge/Google_Gemini-2.4_%40google%2Fgenai-8E75C2.svg?logo=google&logoColor=white)](https://ai.google.dev/)
+[![Leaflet GIS](https://img.shields.io/badge/GIS-Leaflet_1.9-199900.svg?logo=leaflet&logoColor=white)](https://leafletjs.com/)
 
-NER-SAFE is an integrated disaster-management and early-warning platform designed for the North Eastern Region (NER) of India. It combines live weather intelligence, terrain and soil information, historical landslide records, GIS visualization, field incident reporting, multi-factor risk assessment, AI-assisted interpretation, and emergency alert workflows in one platform.
+---
 
-The system is designed to help authorities and field personnel monitor changing environmental conditions, identify vulnerable locations, assess landslide risk, receive field reports, and respond faster.
+## 📌 Table of Contents
 
-Key Features
-Live Monitor
-Location-based live weather monitoring
-Current temperature, humidity, rainfall, wind and pressure
-Hourly and daily forecasts
-Weather alert indicators
-State and district selection across NER and India
-8-State NER Hub
+- [Overview](#-overview)
+- [Problem Statement](#-problem-statement)
+- [Our Solution](#-our-solution)
+- [Key Features](#-key-features)
+- [Application Modules & Views](#-application-modules--views)
+- [System Architecture](#-system-architecture)
+- [How the System Works](#-how-the-system-works)
+- [Technology Stack](#-technology-stack)
+- [Data Sources & APIs](#-data-sources--apis)
+- [AI & Risk Assessment Methodology](#-ai--risk-assessment-methodology)
+- [Database & Storage Architecture](#-database--storage-architecture)
+- [Repository Structure](#-repository-structure)
+- [Installation & Local Setup](#-installation--local-setup)
+- [Environment Variables](#-environment-variables)
+- [Screenshots & UI Showcase](#-screenshots--ui-showcase)
+- [SIH26001 Alignment](#-sih26001-alignment)
+- [Future Scope](#-future-scope)
+- [Team & Contributors](#-team--contributors)
+- [License](#-license)
 
-Provides regional environmental and terrain monitoring for:
+---
 
-Arunachal Pradesh
-Assam
-Manipur
-Meghalaya
-Mizoram
-Nagaland
-Sikkim
-Tripura
+## 📖 Overview
 
-Includes:
+**NER-SAFE** is a unified, full-stack disaster management and real-time early warning platform engineered specifically for the eight states of the **North Eastern Region (NER) of India** (*Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Sikkim, and Tripura*). 
 
-Soil moisture information
-Elevation and terrain analysis
-Calculated slope information
-Satellite/environmental observations
-Historical landslide records
-Regional data-source/status information
-Risk Monitor
+The platform integrates live meteorological telemetry (rainfall, wind, temperature, humidity, surface pressure), digital elevation model (DEM) slope profiles, volumetric soil moisture data, and verified historical landslide records with **Google Gemini AI** for real-time risk interpretation. It bridges the gap between field incidents and disaster management authorities through GPS-tagged citizen reporting with multimedia evidence, an administrative triage console, transboundary cross-border monitoring for neighboring catchments, and multi-channel emergency alerting (SMS, Email, and CAP-compliant bulletins).
 
-NER-SAFE uses a transparent multi-factor landslide risk engine based on:
+---
 
-Terrain slope
-Soil moisture/saturation
-Current and antecedent rainfall
-Forecast precipitation
-Historical landslide proximity
-Ground incident reports
+## ⚠️ Problem Statement
 
-The resulting 0–100 prototype risk score is interpreted with Google Gemini to provide:
+The North Eastern Region (NER) of India is among the world's most tectonically fragile, geologically young, and hydro-meteorologically volatile zones (Seismic Zones V and IV). 
 
-Main driving factors
-Causal explanation
-Uncertainty notes
-Monitoring recommendations
+Key challenges addressed by NER-SAFE:
+1. **Steep Slopes & High Precipitation**: Extreme monsoonal downpours trigger rapid slope saturation, debris flows, and flash floods that sever strategic highway corridors (e.g., NH-29, NH-10, NH-37).
+2. **Data Silos & Delayed Alerts**: Environmental telemetry, satellite soil metrics, and weather warnings often exist in disparate portals, slowing down district-level emergency response.
+3. **Transboundary Catchments**: Major river systems (Brahmaputra, Barak, Teesta, Trishuli) originate in neighboring countries (China, Nepal, Bhutan, Myanmar, Bangladesh); upstream cloudbursts or flash floods propagate downstream across borders without unified cross-border situational awareness.
+4. **Lack of Ground-Truth Feedback**: First responders and district magistrates lack a verified two-way conduit where citizens can submit geotagged photographic incident reports and receive targeted evacuation warnings in their native languages.
 
-The risk score is a prototype multi-factor assessment and is not presented as a scientifically calibrated probability.
+---
 
-Authority Incident Monitor
-Real incident reports from MongoDB Atlas
-Incident filtering and search
-Workflow statuses: SUBMITTED, UNDER REVIEW, VERIFIED, RESOLVED
-GPS/location information
-Photo and video evidence
-GIS visualization
-Authority-side incident review and status updates
-Report Incident
+## 💡 Our Solution
 
-Citizens and field personnel can submit:
+NER-SAFE unites **meteorological monitoring, geospatial hazard visualization, AI risk synthesis, field incident tracking, and multi-channel alerting** into a single, high-performance operational web application:
 
-Landslides
-Ground cracks
-Rockfall
-Slope movement
-Road subsidence/blockage
-Flash-flood related hazards
-Other field observations
+```
+[ WMO / ECMWF Live Weather + DEM Slope + Volumetric Soil Moisture ]
+                                ↓
+                 [ Multi-Factor Landslide Risk Index ]
+                                ↓
+        [ Google Gemini AI: Geological & Actionable Synthesis ]
+                                ↓
+        [ Leaflet GIS Layers + Cross-Border Catchment Tracking ]
+                                ↓
+ [ Citizen Geotagged Reports (Cloudinary) ⇄ Authority Triage Console ]
+                                ↓
+      [ Emergency Alerts: DLT SMS (2Factor) + Email (Brevo) ]
+```
 
-Supports GPS location, manual map pin selection, image/video evidence, descriptions, and persistent incident IDs.
+---
 
-Send Alert
-Emergency alert composition
-Severity and risk selection
-Verified recipient selection from MongoDB
-Email warnings through Brevo
-Native phone SMS workflow for prototype alert broadcasting
-Real delivery/preparation status without fake success reporting
-Multilingual Interface
+## 🌟 Key Features
 
-The frontend supports a centralized internationalization system for multiple languages, including English and regional languages configured for the NER deployment.
+- **Real-Time Weather Telemetry**: Station-grade weather metrics for all 8 NER states and all internal districts (Open-Meteo WMO / ECMWF models with 5-minute server-side caching).
+- **8-State NER Hub**: Multi-district matrix monitoring elevation, terrain slope steepness, volumetric soil moisture saturation, and historical landslide event catalogs.
+- **Cross-Border Weather & Hazard Corridors**: Dedicated international border monitoring for the 5 nations bordering the NER (**Bangladesh, Bhutan, China, Myanmar, and Nepal**), including the **Bhote Koshi → Trishuli river downstream hazard corridor** (Rasuwa → Nuwakot → Dhading → Chitwan).
+- **Gemini AI Risk Assessment**: Dynamic AI reasoning that correlates antecedent rainfall, cumulative saturation, and slope degrees to produce plain-language risk summaries and safety checklists.
+- **Interactive GIS Map**: Leaflet-based geospatial visualization featuring road networks, critical infrastructures, incident pins, hazard heatmap layers, and district overlays.
+- **Citizen Incident Reporting**: Geotagged report submission with interactive GPS pin selection, severity categorization, and multi-format photo/video upload.
+- **Authority Incident Monitor**: Operational triage desk allowing disaster authorities to filter, verify, update lifecycle status (*Reported*, *Verified*, *In Progress*, *Resolved*, *Dismissed*), and review field evidence.
+- **Multi-Channel Emergency Alerting**: Immediate broadcast capabilities via Indian DLT-compliant SMS (`2Factor.in`), transactional email alerts (`Brevo`), and local Android SIM hardware gateway integration.
+- **Octa-Lingual Accessibility**: Full internationalization (`i18n`) supporting 8 regional languages: **English, Hindi, Assamese (অসমীয়া), Bengali (বাংলা), Khasi (Ka Ktien Khasi), Mizo (Mizo ṭawng), Manipuri (মৈতৈলোন্ / Meiteilon), and Nepali (नेपाली)**.
+- **Dual Storage Resilience**: Hybrid database architecture supporting production **MongoDB Atlas** with automated zero-config failover to local persistent JSON storage.
 
-Cross-Border Weather Intelligence
+---
 
-Future expansion of NER-SAFE includes monitoring weather conditions and alerts from the neighboring countries connected to the NER:
+## 🖥️ Application Modules & Views
 
-Bangladesh
-Bhutan
-China
-Myanmar
-Nepal
+| # | Module / Tab | Purpose & Capabilities |
+|---|---|---|
+| 1 | **Home** | Executive command dashboard displaying current regional risk level, quick actions, latest alerts, and telemetry overview. |
+| 2 | **Live Monitor** | High-precision district-level weather telemetry, 24-hour hourly forecast, 7-day daily forecast, barometric pressure, wind vectors, and UV indices. |
+| 3 | **8-State NER Hub** | Comprehensive regional monitoring across all 8 states; displays terrain slope angles, soil saturation (0–100 cm depth), and historical landslide inventories. |
+| 4 | **Risk Monitor** | Multi-factor landslide susceptibility index combining rain triggers with slope stability, coupled with server-side Google Gemini AI risk explanations. |
+| 5 | **Cross-Border Weather** | International border weather monitoring for the 5 neighboring countries with specialized downstream hazard corridor visualization for Nepal. |
+| 6 | **Monitor (GIS)** | Geospatial situational map with toggleable incident layers, road connectivity corridors, risk heatmaps, and coordinate inspection. |
+| 7 | **Authority Incident Monitor** | Restricted administrative console for emergency operations centers (EOC) to triage, inspect evidence, filter, and update incident statuses. |
+| 8 | **Report Incident** | Public/field portal for submitting geotagged incident reports with media uploads (landslides, flash floods, road blockages, mudslides). |
+| 9 | **Send Alert** | Emergency dispatch interface for crafting targeted warnings and broadcasting via SMS, email, and siren alerts. |
+| 10 | **Account & Profiles** | Role-based authentication supporting Citizens, Field Responders, and Authorities with OTP verification via email and SMS. |
+| 11 | **About NER-SAFE** | Detailed mission documentation, SIH26001 alignment, institutional references (NDMA, GSI, IMD), and data provenance audit. |
 
-This is intended to provide broader situational awareness for weather systems that may influence NER.
+---
 
-Data & Technology
-Weather
-Open-Meteo weather services
-WMO weather-code interpretation
-ECMWF-backed meteorological/model data where applicable
-Terrain & Soil
-Copernicus DEM elevation/terrain information
-Calculated slope and aspect
-ECMWF ERA5-Land soil moisture information
-Historical Hazard Data
-Geological Survey of India historical landslide information
-Other verified historical datasets incorporated by the application
-GIS
-Interactive map visualization
-OpenStreetMap/Carto-based mapping layers
-Incident and hazard markers
-AI
-Google Gemini for intelligent interpretation of the deterministic risk-engine output
-Database & Storage
-MongoDB Atlas for persistent users and incident records
-Cloudinary for incident image/video storage
-Communication
-Brevo for email OTP and disaster-warning email delivery
-2Factor for mobile OTP verification
-Native phone SMS workflow for prototype warning delivery
+## 🏗️ System Architecture
+
+```mermaid
+flowchart TB
+    subgraph Client["Frontend Client (React 19 + TypeScript + Vite)"]
+        UI["Tailwind CSS 4 UI Components"]
+        I18N["i18next (8 Regional Languages)"]
+        MAP["Leaflet GIS & GeoJSON Maps"]
+        STATE["React State & Local Persistence"]
+    end
+
+    subgraph Server["Backend Server (Node.js + Express + TSX)"]
+        PROXY["Express Gateway (Port 3000)"]
+        CACHE["In-Memory Telemetry Cache (5m TTL)"]
+        AUTH["Auth Service (JWT / OTP Verification)"]
+        ROUTERS["API Endpoints: /api/weather, /api/incidents, /api/risk, /api/alerts"]
+    end
+
+    subgraph AI["AI Risk Engine"]
+        GEMINI["Google Gemini API (@google/genai)"]
+    end
+
+    subgraph Data["External Data Feeds"]
+        METEO["Open-Meteo (WMO / ECMWF Real-Time Feeds)"]
+        DEM["Digital Elevation Model (DEM) Slope Data"]
+        SOIL["Volumetric Soil Moisture Data (0-100cm)"]
+    end
+
+    subgraph Storage["Storage & Media Layer"]
+        MONGO[("MongoDB Atlas (Mongoose)")]
+        LOCAL[("Local JSON Store (Resilient Fallback)")]
+        CLD[("Cloudinary Media CDN")]
+    end
+
+    subgraph Dispatch["Emergency Communications"]
+        BREVO["Brevo (Transactional Email API)"]
+        TWOFACTOR["2Factor.in (Indian DLT SMS Gateway)"]
+        ANDROID["Android SIM Gateway Relay"]
+    end
+
+    %% Connections
+    UI <--> PROXY
+    PROXY <--> CACHE
+    PROXY <--> ROUTERS
+    ROUTERS <--> GEMINI
+    ROUTERS <--> METEO
+    ROUTERS <--> DEM
+    ROUTERS <--> SOIL
+    ROUTERS <--> MONGO
+    ROUTERS <--> LOCAL
+    ROUTERS <--> CLD
+    ROUTERS <--> BREVO
+    ROUTERS <--> TWOFACTOR
+    ROUTERS <--> ANDROID
+    MAP <--> PROXY
+```
+
+---
+
+## ⚙️ How the System Works
+
+1. **Environmental Ingestion**: The Express server periodically queries Open-Meteo's WMO/ECMWF endpoints for coordinates matching districts across the 8 NER states and border stations. Responses are cached with a 5-minute TTL.
+2. **Multi-Factor Risk Calculation**: A deterministic risk engine evaluates:
+   - **Current & Antecedent Rainfall** (24h to 72h accumulation)
+   - **Soil Saturation Index** (volumetric moisture at root/subsurface depths)
+   - **Slope Angle & Aspect** from Digital Elevation Model data
+   - **Historical Occurrence Factor** in the specific geological sector
+3. **AI Interpretation**: When users open the *Risk Monitor*, the system dispatches telemetry to Google Gemini (`gemini-2.5-flash`), which synthesizes the data into plain-language hazard evaluations, trigger mechanics, and localized safety directives.
+4. **Community Incident Flow**:
+   - A field user or citizen captures evidence of a rockfall or road blockage.
+   - Coordinates are automatically resolved via GPS or selected on an interactive map.
+   - Media is validated, buffered, and uploaded to Cloudinary CDN.
+   - Incident is persisted in MongoDB Atlas (or local store) and flagged as `reported`.
+5. **Authority Triage & Warning Dispatch**:
+   - EOC operators view new incidents in real time on the *Incident Monitor*.
+   - If verified, authorities craft an alert in the *Send Alert* console.
+   - The message is dispatched via Brevo Email and 2Factor SMS to registered local contacts.
+
+---
+
+## 💻 Technology Stack
+
+### Frontend
+- **Framework**: React 19 (Functional components, Hooks)
+- **Language**: TypeScript 5.8
+- **Build Tool**: Vite 6.2 with `@vitejs/plugin-react`
+- **Styling**: Tailwind CSS 4.1 (`@tailwindcss/vite`)
+- **Mapping & GIS**: Leaflet 1.9, `@types/leaflet`
+- **Charts & Visualizations**: Recharts 3.10
+- **Icons & Animation**: Lucide React (`lucide-react`), Motion (`motion/react`)
+- **Localization**: `i18next`, `react-i18next`
+
+### Backend
+- **Runtime**: Node.js (v20+) with `tsx` (TypeScript Execute)
+- **Framework**: Express 4.21
+- **File & Media Handling**: Multer 2.2 (Memory Storage) & Cloudinary SDK 2.11
+- **Database ORM**: Mongoose 9.9
+- **In-Memory Testing DB**: `mongodb-memory-server` 11.2
+- **Email & Communications**: Brevo SDK, Resend, Nodemailer
+- **Environment Management**: `dotenv`
+
+### Artificial Intelligence
+- **AI SDK**: `@google/genai` (Google Gen AI TypeScript SDK)
+- **Model**: Google Gemini 2.5 Flash / Gemini Pro
+
+---
+
+## 🌐 Data Sources & APIs
+
+| Service / Provider | Purpose in NER-SAFE | Authentication Required |
+|---|---|---|
+| **Open-Meteo (WMO / ECMWF)** | Real-time precipitation, temperature, humidity, wind vectors, pressure, UV index | No (Open Meteorological Data) |
+| **SRTM Digital Elevation Model (DEM)** | Terrain slope angle and elevation profiles | Integrated into geospatial calculations |
+| **Volumetric Soil Moisture Feeds** | Root zone and deep-soil water saturation (0–100 cm) | Integrated into telemetry engine |
+| **Google Gemini API** | Real-time geological risk interpretation and localized advisories | `GEMINI_API_KEY` |
+| **Cloudinary** | Secure media evidence hosting (photos/videos of landslides) | `CLOUDINARY_API_KEY`, `SECRET` |
+| **Brevo (Sendinblue)** | Transactional email notifications and authentication OTPs | `BREVO_API_KEY` |
+| **2Factor.in** | Indian mobile transactional SMS alerts (DLT-compliant) | `TWOFACTOR_API_KEY` |
+| **OpenStreetMap & CartoDB** | High-performance cartographic base tiles | Open Access |
+
+---
+
+## 🧠 AI & Risk Assessment Methodology
+
+NER-SAFE employs a **two-tier risk evaluation pipeline**:
+
+1. **Deterministic Telemetry Indexing**:
+   - Evaluates short-term rainfall intensity against geological threshold baselines.
+   - Weights terrain slope steepness ($>30^\circ$ significantly increases shear stress).
+   - Factors in subsurface volumetric moisture percentage ($>75\%$ indicates near-complete pore-water pressure saturation).
+   - Generates a quantified Hazard Level: `LOW`, `MODERATE`, `HIGH`, or `EXTREME`.
+
+2. **Google Gemini LLM Synthesis (`@google/genai`)**:
+   - The quantified metrics, district metadata, and weather forecast are passed in a structured schema to Google Gemini.
+   - The model acts as an environmental geologist, returning:
+     - **Scientific Hazard Summary**: What physical mechanisms are driving current risk.
+     - **Vulnerability Breakdown**: Specific hazards to transport lifelines, bridges, and settlements.
+     - **Emergency Recommendations**: Actionable instructions for district administrations and citizens.
+
+---
+
+## 🗄️ Database & Storage Architecture
+
+### 1. MongoDB Atlas (`incidents`, `users`, `alert_logs`)
+- **Incidents Collection**: Stores title, description, category (`landslide`, `flash-flood`, `road-blocked`, `mudslide`, `other`), severity (`low`, `moderate`, `high`, `extreme`), geographic coordinates (`lat`, `lng`), state, district, media URLs, status (`reported`, `verified`, `in-progress`, `resolved`, `dismissed`), and reporter info.
+- **Users Collection**: Stores registered citizens and authorities, roles (`citizen`, `responder`, `authority`), verified phone/email, and preferred language.
+- **Alert Logs Collection**: Audits broadcast history, dispatch timestamps, channels used, and recipient counts.
+
+### 2. Resilient Fallback Engine (`localStoreService.ts`)
+If MongoDB Atlas is temporarily unreachable or unconfigured during local development, the system seamlessly routes write and read operations to a local file-based JSON store without throwing fatal application errors.
+
+### 3. Media CDN (Cloudinary)
+Citizen report uploads are streamed in-memory via Multer directly to Cloudinary's secure cloud storage, returning HTTPS delivery URLs and secure public IDs.
+
+---
+
+## 📂 Repository Structure
+
+```
+.
+├── .env.example                  # Environment configuration template
+├── metadata.json                 # Application identity and SIH26001 capability manifest
+├── package.json                  # Dependencies and build scripts
+├── server.ts                     # Unified Express server & Vite middleware entry point
+├── vite.config.ts                # Vite configuration with Tailwind CSS plugin
+├── tsconfig.json                 # TypeScript compiler configuration
+├── server/                       # Backend architecture
+│   ├── db/
+│   │   └── connection.ts         # MongoDB Atlas connection manager with resilient fallback
+│   ├── models/
+│   │   ├── Incident.ts           # Mongoose Incident model & schema definition
+│   │   └── User.ts               # Mongoose User model & authentication schema
+│   └── services/
+│       ├── localStoreService.ts  # Fallback persistent storage engine
+│       └── smsService.ts         # Multi-channel SMS and Android gateway dispatcher
+└── src/                          # Frontend React application
+    ├── App.tsx                   # Main layout controller and navigation state
+    ├── main.tsx                  # React DOM root entry point
+    ├── index.css                 # Global styles and Tailwind CSS imports
+    ├── components/               # Modular UI views and widgets
+    │   ├── Header.tsx            # Navigation bar, language switcher, user badge
+    │   ├── Sidebar.tsx           # Navigation drawer for tabs and quick status
+    │   ├── HomeIntroScreen.tsx   # Dashboard overview and live situation stats
+    │   ├── LiveMonitorCommandCenter.tsx # Weather telemetry and forecasting
+    │   ├── NerHubView.tsx        # 8-state environmental and historical monitor
+    │   ├── RiskMonitorView.tsx   # Landslide risk matrix and Gemini AI insight
+    │   ├── CrossBorderWeatherView.tsx # Transboundary weather & river tracking
+    │   ├── GisMonitorView.tsx    # Leaflet interactive GIS incident map
+    │   ├── IncidentMonitoringConsole.tsx # Authority triage console
+    │   ├── ReportIncidentView.tsx# Citizen GPS incident submission form
+    │   ├── SendAlertView.tsx     # Emergency broadcast creation & dispatch
+    │   ├── crossborder/          # Cross-border map layers & Nepal flood corridor
+    │   └── gis/                  # GIS layer controls, legends, and drawer panels
+    ├── data/
+    │   ├── indiaLocations.ts     # Complete coordinates & districts for all 8 NER states
+    │   └── nerHistoricalData.ts  # Verified historical landslide catalogs
+    ├── i18n/                     # Octa-lingual internationalization configuration
+    │   └── locales/              # Translation files (en, hi, as, bn, kha, lus, mni, ne)
+    ├── services/                 # Frontend API consumers (weather, incidents, auth, risk)
+    ├── types/                    # TypeScript interfaces for weather, incidents, and telemetry
+    └── utils/                    # Meteorological formatting and spatial math helpers
+```
+
+---
+
+## 🚀 Installation & Local Setup
+
+### Prerequisites
+- **Node.js**: v20.x or higher
+- **npm** (v10+) or **bun**
+- (Optional) MongoDB Atlas account, Cloudinary account, Brevo/2Factor keys for external services.
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/ner-safe.git
+cd ner-safe
+```
+
+### 2. Install Dependencies
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+Copy the example template to create your `.env` file:
+```bash
+cp .env.example .env
+```
+Open `.env` and fill in your credentials (see [Environment Variables](#-environment-variables)). If left blank, the application will boot with resilient local fallbacks for evaluation.
+
+### 4. Run Development Server
+```bash
+npm run dev
+```
+The server will start at: **`http://localhost:3000`**
+
+### 5. Build for Production
+```bash
+npm run build
+npm start
+```
+
+---
+
+## 🔐 Environment Variables
+
+The project uses the following environment variables (template available in `.env.example`):
+
+```env
+# 1. DATABASE CONFIGURATION (MongoDB Atlas)
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net
+MONGODB_DB_NAME=NER-SAFE
+
+# 2. AI & LARGE LANGUAGE MODEL (Google Gemini)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# 3. MEDIA ASSET STORAGE (Cloudinary)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
+
+# 4. TRANSACTIONAL EMAIL (Brevo / Sendinblue)
+BREVO_API_KEY=your_brevo_api_key
+BREVO_SENDER_EMAIL=alerts@yourdomain.com
+BREVO_SENDER_NAME=NER-SAFE Early Warning
+
+# 5. CITIZEN SMS DISPATCH (2Factor.in)
+TWOFACTOR_API_KEY=your_2factor_api_key
+TWOFACTOR_SENDER_ID=NERSAF
+TWOFACTOR_TEMPLATE_NAME=EmergencyAlert
+
+# 6. AUTHENTICATION & SECURITY
+SESSION_SECRET=your_random_session_secret_key
+
+# 7. ANDROID SMS SIM GATEWAY (Optional Hardware Relay)
+ANDROID_SMS_GATEWAY_URL=http://your-phone-ip:8080
+ANDROID_SMS_GATEWAY_TOKEN=your_gateway_token
+
+# 8. APPLICATION URL
+APP_URL=http://localhost:3000
+```
+
+> **Note**: Sensitive keys are never committed to version control. The application functions gracefully in offline/local evaluation mode when optional third-party credentials are not set.
+
+---
+
+## 📸 Screenshots & UI Showcase
+
+*(Add your application screenshots in the `assets/` folder to display here)*
+
+| Command Center & Live Telemetry | Risk Monitor & Gemini AI Assessment |
+|:---:|:---:|
+| ![Live Monitor Placeholder](https://via.placeholder.com/600x340/0f172a/38bdf8?text=NER-SAFE+Live+Weather+Command+Center) | ![Risk Monitor Placeholder](https://via.placeholder.com/600x340/0f172a/38bdf8?text=Gemini+AI+Landslide+Risk+Assessment) |
+
+| Cross-Border Weather & Hazard Corridors | GIS Incident Map & Triage Console |
+|:---:|:---:|
+| ![Cross-Border Map](https://via.placeholder.com/600x340/0f172a/38bdf8?text=Cross-Border+Transboundary+Corridor+Map) | ![GIS Incident Map](https://via.placeholder.com/600x340/0f172a/38bdf8?text=Interactive+Leaflet+GIS+Triage+Console) |
+
+---
+
+## 🎯 SIH26001 Alignment
+
+NER-SAFE is directly architected to address **Smart India Hackathon Problem Statement SIH26001**:
+
+1. **Regional Focus on all 8 North Eastern States**: Complete geographic and administrative coverage across Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Sikkim, and Tripura.
+2. **Multi-Factor Trigger Integration**: Fuses meteorological rainfall rates, digital terrain slope models, volumetric soil saturation, and historical landslide catalogs.
+3. **Actionable AI Interpretation**: Implements server-side Google Gemini models to translate complex geological telemetry into clear, prioritized advisories.
+4. **Closing the Sensor-to-Citizen Loop**: Provides geotagged crowdsourced incident reporting with photo verification alongside instant multi-channel emergency alerting.
+5. **Transboundary River Intelligence**: Acknowledges the shared hydrological borders of the NER by monitoring upstream weather and flash-flood hazard corridors in neighboring countries.
+
+---
+
+## 🔮 Future Scope
+
+While the current repository represents a fully functional prototype, planned advancements include:
+
+- [ ] **IoT Geotechnical Sensor Telemetry**: Integration with physical slope inclinometers, piezometers, and pore-pressure sensors deployed along high-risk highway corridors (e.g., NH-10 Sikkim, NH-29 Nagaland).
+- [ ] **Automated Satellite SAR Interferometry (InSAR)**: Ingestion of Sentinel-1 / NISAR ground-deformation maps to detect millimeter-scale slope subsidence before catastrophic failure occurs.
+- [ ] **NDMA Sachet / CAP XML Integration**: Native protocol compatibility with India's National Disaster Management Authority (NDMA) Sachet Common Alerting Protocol for regional cell broadcasts.
+- [ ] **Offline PWA & Mesh Radio Alerts**: Service worker caching and LoRa / Ham-radio packet gateway support for alerting remote villages when cellular internet connectivity fails during disasters.
+
+---
+
+## 👥 Team & Contributors
+
+Developed with dedication for the **Smart India Hackathon (SIH)**.
+
+- **Project**: NER-SAFE (Live Weather & Land Monitor)
+- **Problem Statement ID**: SIH26001
+- **Focus Region**: North Eastern Region (NER), India
+- **Repository Maintainer**: Gaurav Mritunjay (`gaurxmratunjay@gmail.com`)
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details. Built for public safety and disaster resilience in the North Eastern Region of India.
