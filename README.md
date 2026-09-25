@@ -13,11 +13,7 @@
 **Mratunjay Gaur**
 
 **Contributors:**  
-- Sajid Ali Ansari
-- Yashsav Goyal
-- Ayush Yadav
-- Poornima K
-- TALIN YADAV
+
 
 ---
 
@@ -65,7 +61,6 @@
 - [SIH26001 Alignment](#-sih26001-alignment)
 - [Future Scope](#-future-scope)
 - [Team & Contributors](#-team--contributors)
-- [License](#-license)
 
 ---
 
@@ -451,7 +446,7 @@ APP_URL=http://localhost:3000
 
 | Command Center & Live Telemetry | Risk Monitor & Gemini AI Assessment |
 |:---:|:---:|
-| ![Live Monitor Placeholder](https://via.placeholder.com/600x340/0f172a/38bdf8?text=NER-SAFE+Live+Weather+Command+Center) | ![Risk Monitor Placeholder](https://via.placeholder.com/600x340/0f172a/38bdf8?text=Gemini+AI+Landslide+Risk+Assessment) |
+| ![Live Monitor Placeholder]() | ![Risk Monitor Placeholder](https://via.placeholder.com/600x340/0f172a/38bdf8?text=Gemini+AI+Landslide+Risk+Assessment) |
 
 | Cross-Border Weather & Hazard Corridors | GIS Incident Map & Triage Console |
 |:---:|:---:|
@@ -490,14 +485,7 @@ While the current repository represents a fully functional prototype, planned ad
 Mratunjay Gaur
 
 **Contributors:**  
-- Sajid Ali Ansari
-- Yashsav Goyal
-- Ayush Yadav
-- Poornima K
-- TALIN YADAV
+
 
 ---
 
-## 📄 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details. Built for public safety and disaster resilience in the North Eastern Region of India.
