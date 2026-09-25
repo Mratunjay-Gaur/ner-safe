@@ -13,6 +13,7 @@
 **Mratunjay Gaur**
 
 **Contributors:**  
+- Sajid Ali Ansari
 - Ayush Yadav
 
 ---
@@ -485,6 +486,7 @@ While the current repository represents a fully functional prototype, planned ad
 Mratunjay Gaur
 
 **Contributors:**  
+- Sajid Ali Ansari
 - Ayush Yadav
 
 ---
