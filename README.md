@@ -1,6 +1,30 @@
 # NER-SAFE 🛡️
 ### *AI-Powered Multi-Hazard Early Warning & Operational Telemetry System for the North Eastern Region of India*
 
+## 👥 Team Black Bulls
+
+**Team Lead & Developer:**  
+Mratunjay Gaur
+
+**Contributors:**  
+- Sajid Ali Ansari
+- Yashsav Goyal
+- Ayush Yadav
+- Poornima K
+- TALIN YADAV
+
+---
+
+## 🎥 Demo Video
+
+### NER-SAFE Working Prototype
+
+[▶️ Watch NER-SAFE Demo Video](YOUR_GOOGLE_DRIVE_VIDEO_LINK_HERE)
+
+> The demo video demonstrates the working NER-SAFE platform, including live monitoring, 8-State NER Hub, AI-assisted risk assessment, GIS monitoring, incident reporting, authority monitoring, cross-border weather monitoring, multilingual support, and emergency alerts.
+
+---
+
 [![SIH Problem ID](https://img.shields.io/badge/SIH-SIH26001-blue.svg)](#sih26001-alignment)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?logo=react&logoColor=black)](https://react.dev/)
@@ -15,6 +39,8 @@
 
 ## 📌 Table of Contents
 
+- [Team Black Bulls](#-team-black-bulls)
+- [Demo Video](#-demo-video)
 - [Overview](#-overview)
 - [Problem Statement](#-problem-statement)
 - [Our Solution](#-our-solution)
@@ -39,7 +65,7 @@
 
 ## 📖 Overview
 
-**NER-SAFE** is a unified, full-stack disaster management and real-time early warning platform engineered specifically for the eight states of the **North Eastern Region (NER) of India** (*Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Sikkim, and Tripura*). 
+**NER-SAFE** is a unified, full-stack disaster management and real-time early warning platform engineered specifically for the eight states of the **North Eastern Region (NER) of India** (*Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Sikkim, and Tripura*).
 
 The platform integrates live meteorological telemetry (rainfall, wind, temperature, humidity, surface pressure), digital elevation model (DEM) slope profiles, volumetric soil moisture data, and verified historical landslide records with **Google Gemini AI** for real-time risk interpretation. It bridges the gap between field incidents and disaster management authorities through GPS-tagged citizen reporting with multimedia evidence, an administrative triage console, transboundary cross-border monitoring for neighboring catchments, and multi-channel emergency alerting (SMS, Email, and CAP-compliant bulletins).
 
@@ -47,9 +73,10 @@ The platform integrates live meteorological telemetry (rainfall, wind, temperatu
 
 ## ⚠️ Problem Statement
 
-The North Eastern Region (NER) of India is among the world's most tectonically fragile, geologically young, and hydro-meteorologically volatile zones (Seismic Zones V and IV). 
+The North Eastern Region (NER) of India is among the world's most tectonically fragile, geologically young, and hydro-meteorologically volatile zones (Seismic Zones V and IV).
 
 Key challenges addressed by NER-SAFE:
+
 1. **Steep Slopes & High Precipitation**: Extreme monsoonal downpours trigger rapid slope saturation, debris flows, and flash floods that sever strategic highway corridors (e.g., NH-29, NH-10, NH-37).
 2. **Data Silos & Delayed Alerts**: Environmental telemetry, satellite soil metrics, and weather warnings often exist in disparate portals, slowing down district-level emergency response.
 3. **Transboundary Catchments**: Major river systems (Brahmaputra, Barak, Teesta, Trishuli) originate in neighboring countries (China, Nepal, Bhutan, Myanmar, Bangladesh); upstream cloudbursts or flash floods propagate downstream across borders without unified cross-border situational awareness.
@@ -61,16 +88,16 @@ Key challenges addressed by NER-SAFE:
 
 NER-SAFE unites **meteorological monitoring, geospatial hazard visualization, AI risk synthesis, field incident tracking, and multi-channel alerting** into a single, high-performance operational web application:
 
-```
+```text
 [ WMO / ECMWF Live Weather + DEM Slope + Volumetric Soil Moisture ]
                                 ↓
-                 [ Multi-Factor Landslide Risk Index ]
+                  [ Multi-Factor Landslide Risk Index ]
                                 ↓
         [ Google Gemini AI: Geological & Actionable Synthesis ]
                                 ↓
         [ Leaflet GIS Layers + Cross-Border Catchment Tracking ]
                                 ↓
- [ Citizen Geotagged Reports (Cloudinary) ⇄ Authority Triage Console ]
+[ Citizen Geotagged Reports (Cloudinary) ⇄ Authority Triage Console ]
                                 ↓
       [ Emergency Alerts: DLT SMS (2Factor) + Email (Brevo) ]
 ```
@@ -150,7 +177,6 @@ flowchart TB
         ANDROID["Android SIM Gateway Relay"]
     end
 
-    %% Connections
     UI <--> PROXY
     PROXY <--> CACHE
     PROXY <--> ROUTERS
@@ -193,6 +219,7 @@ flowchart TB
 ## 💻 Technology Stack
 
 ### Frontend
+
 - **Framework**: React 19 (Functional components, Hooks)
 - **Language**: TypeScript 5.8
 - **Build Tool**: Vite 6.2 with `@vitejs/plugin-react`
@@ -203,6 +230,7 @@ flowchart TB
 - **Localization**: `i18next`, `react-i18next`
 
 ### Backend
+
 - **Runtime**: Node.js (v20+) with `tsx` (TypeScript Execute)
 - **Framework**: Express 4.21
 - **File & Media Handling**: Multer 2.2 (Memory Storage) & Cloudinary SDK 2.11
@@ -212,6 +240,7 @@ flowchart TB
 - **Environment Management**: `dotenv`
 
 ### Artificial Intelligence
+
 - **AI SDK**: `@google/genai` (Google Gen AI TypeScript SDK)
 - **Model**: Google Gemini 2.5 Flash / Gemini Pro
 
@@ -236,81 +265,86 @@ flowchart TB
 
 NER-SAFE employs a **two-tier risk evaluation pipeline**:
 
-1. **Deterministic Telemetry Indexing**:
-   - Evaluates short-term rainfall intensity against geological threshold baselines.
-   - Weights terrain slope steepness ($>30^\circ$ significantly increases shear stress).
-   - Factors in subsurface volumetric moisture percentage ($>75\%$ indicates near-complete pore-water pressure saturation).
-   - Generates a quantified Hazard Level: `LOW`, `MODERATE`, `HIGH`, or `EXTREME`.
+### 1. Deterministic Telemetry Indexing
 
-2. **Google Gemini LLM Synthesis (`@google/genai`)**:
-   - The quantified metrics, district metadata, and weather forecast are passed in a structured schema to Google Gemini.
-   - The model acts as an environmental geologist, returning:
-     - **Scientific Hazard Summary**: What physical mechanisms are driving current risk.
-     - **Vulnerability Breakdown**: Specific hazards to transport lifelines, bridges, and settlements.
-     - **Emergency Recommendations**: Actionable instructions for district administrations and citizens.
+- Evaluates short-term rainfall intensity against geological threshold baselines.
+- Weights terrain slope steepness ($>30^\circ$ significantly increases shear stress).
+- Factors in subsurface volumetric moisture percentage ($>75\%$ indicates near-complete pore-water pressure saturation).
+- Generates a quantified Hazard Level: `LOW`, `MODERATE`, `HIGH`, or `EXTREME`.
+
+### 2. Google Gemini LLM Synthesis (`@google/genai`)
+
+- The quantified metrics, district metadata, and weather forecast are passed in a structured schema to Google Gemini.
+- The model acts as an environmental geologist, returning:
+  - **Scientific Hazard Summary**: What physical mechanisms are driving current risk.
+  - **Vulnerability Breakdown**: Specific hazards to transport lifelines, bridges, and settlements.
+  - **Emergency Recommendations**: Actionable instructions for district administrations and citizens.
 
 ---
 
 ## 🗄️ Database & Storage Architecture
 
 ### 1. MongoDB Atlas (`incidents`, `users`, `alert_logs`)
+
 - **Incidents Collection**: Stores title, description, category (`landslide`, `flash-flood`, `road-blocked`, `mudslide`, `other`), severity (`low`, `moderate`, `high`, `extreme`), geographic coordinates (`lat`, `lng`), state, district, media URLs, status (`reported`, `verified`, `in-progress`, `resolved`, `dismissed`), and reporter info.
 - **Users Collection**: Stores registered citizens and authorities, roles (`citizen`, `responder`, `authority`), verified phone/email, and preferred language.
 - **Alert Logs Collection**: Audits broadcast history, dispatch timestamps, channels used, and recipient counts.
 
 ### 2. Resilient Fallback Engine (`localStoreService.ts`)
+
 If MongoDB Atlas is temporarily unreachable or unconfigured during local development, the system seamlessly routes write and read operations to a local file-based JSON store without throwing fatal application errors.
 
 ### 3. Media CDN (Cloudinary)
+
 Citizen report uploads are streamed in-memory via Multer directly to Cloudinary's secure cloud storage, returning HTTPS delivery URLs and secure public IDs.
 
 ---
 
 ## 📂 Repository Structure
 
-```
+```text
 .
-├── .env.example                  # Environment configuration template
-├── metadata.json                 # Application identity and SIH26001 capability manifest
-├── package.json                  # Dependencies and build scripts
-├── server.ts                     # Unified Express server & Vite middleware entry point
-├── vite.config.ts                # Vite configuration with Tailwind CSS plugin
-├── tsconfig.json                 # TypeScript compiler configuration
-├── server/                       # Backend architecture
+├── .env.example
+├── metadata.json
+├── package.json
+├── server.ts
+├── vite.config.ts
+├── tsconfig.json
+├── server/
 │   ├── db/
-│   │   └── connection.ts         # MongoDB Atlas connection manager with resilient fallback
+│   │   └── connection.ts
 │   ├── models/
-│   │   ├── Incident.ts           # Mongoose Incident model & schema definition
-│   │   └── User.ts               # Mongoose User model & authentication schema
+│   │   ├── Incident.ts
+│   │   └── User.ts
 │   └── services/
-│       ├── localStoreService.ts  # Fallback persistent storage engine
-│       └── smsService.ts         # Multi-channel SMS and Android gateway dispatcher
-└── src/                          # Frontend React application
-    ├── App.tsx                   # Main layout controller and navigation state
-    ├── main.tsx                  # React DOM root entry point
-    ├── index.css                 # Global styles and Tailwind CSS imports
-    ├── components/               # Modular UI views and widgets
-    │   ├── Header.tsx            # Navigation bar, language switcher, user badge
-    │   ├── Sidebar.tsx           # Navigation drawer for tabs and quick status
-    │   ├── HomeIntroScreen.tsx   # Dashboard overview and live situation stats
-    │   ├── LiveMonitorCommandCenter.tsx # Weather telemetry and forecasting
-    │   ├── NerHubView.tsx        # 8-state environmental and historical monitor
-    │   ├── RiskMonitorView.tsx   # Landslide risk matrix and Gemini AI insight
-    │   ├── CrossBorderWeatherView.tsx # Transboundary weather & river tracking
-    │   ├── GisMonitorView.tsx    # Leaflet interactive GIS incident map
-    │   ├── IncidentMonitoringConsole.tsx # Authority triage console
-    │   ├── ReportIncidentView.tsx# Citizen GPS incident submission form
-    │   ├── SendAlertView.tsx     # Emergency broadcast creation & dispatch
-    │   ├── crossborder/          # Cross-border map layers & Nepal flood corridor
-    │   └── gis/                  # GIS layer controls, legends, and drawer panels
+│       ├── localStoreService.ts
+│       └── smsService.ts
+└── src/
+    ├── App.tsx
+    ├── main.tsx
+    ├── index.css
+    ├── components/
+    │   ├── Header.tsx
+    │   ├── Sidebar.tsx
+    │   ├── HomeIntroScreen.tsx
+    │   ├── LiveMonitorCommandCenter.tsx
+    │   ├── NerHubView.tsx
+    │   ├── RiskMonitorView.tsx
+    │   ├── CrossBorderWeatherView.tsx
+    │   ├── GisMonitorView.tsx
+    │   ├── IncidentMonitoringConsole.tsx
+    │   ├── ReportIncidentView.tsx
+    │   ├── SendAlertView.tsx
+    │   ├── crossborder/
+    │   └── gis/
     ├── data/
-    │   ├── indiaLocations.ts     # Complete coordinates & districts for all 8 NER states
-    │   └── nerHistoricalData.ts  # Verified historical landslide catalogs
-    ├── i18n/                     # Octa-lingual internationalization configuration
-    │   └── locales/              # Translation files (en, hi, as, bn, kha, lus, mni, ne)
-    ├── services/                 # Frontend API consumers (weather, incidents, auth, risk)
-    ├── types/                    # TypeScript interfaces for weather, incidents, and telemetry
-    └── utils/                    # Meteorological formatting and spatial math helpers
+    │   ├── indiaLocations.ts
+    │   └── nerHistoricalData.ts
+    ├── i18n/
+    │   └── locales/
+    ├── services/
+    ├── types/
+    └── utils/
 ```
 
 ---
@@ -318,35 +352,44 @@ Citizen report uploads are streamed in-memory via Multer directly to Cloudinary'
 ## 🚀 Installation & Local Setup
 
 ### Prerequisites
+
 - **Node.js**: v20.x or higher
 - **npm** (v10+) or **bun**
 - (Optional) MongoDB Atlas account, Cloudinary account, Brevo/2Factor keys for external services.
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/your-username/ner-safe.git
 cd ner-safe
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 3. Configure Environment Variables
+
 Copy the example template to create your `.env` file:
+
 ```bash
 cp .env.example .env
 ```
+
 Open `.env` and fill in your credentials (see [Environment Variables](#-environment-variables)). If left blank, the application will boot with resilient local fallbacks for evaluation.
 
 ### 4. Run Development Server
+
 ```bash
 npm run dev
 ```
+
 The server will start at: **`http://localhost:3000`**
 
 ### 5. Build for Production
+
 ```bash
 npm run build
 npm start
@@ -435,12 +478,17 @@ While the current repository represents a fully functional prototype, planned ad
 
 ## 👥 Team & Contributors
 
-Developed with dedication for the **Smart India Hackathon (SIH)**.
+**Team:** Black Bulls
 
-- **Project**: NER-SAFE (Live Weather & Land Monitor)
-- **Problem Statement ID**: SIH26001
-- **Focus Region**: North Eastern Region (NER), India
-- **Repository Maintainer**: Gaurav Mritunjay (`gaurxmratunjay@gmail.com`)
+**Team Lead & Developer:**  
+Mratunjay Gaur
+
+**Contributors:**  
+- Sajid Ali Ansari
+- Yashsav Goyal
+- Ayush Yadav
+- Poornima K
+- TALIN YADAV
 
 ---
 
