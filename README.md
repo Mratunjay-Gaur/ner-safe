@@ -25,7 +25,7 @@
 
 ### NER-SAFE Working Prototype
 
-[▶️ Watch NER-SAFE Demo Video](YOUR_GOOGLE_DRIVE_VIDEO_LINK_HERE)
+[▶️ Watch NER-SAFE Demo Video](https://drive.google.com/file/d/1liRIvIIYZUNQOUYuhGt0hVo-68-yuBvP/view?usp=sharing)
 
 > The demo video demonstrates the working NER-SAFE platform, including live monitoring, 8-State NER Hub, AI-assisted risk assessment, GIS monitoring, incident reporting, authority monitoring, cross-border weather monitoring, multilingual support, and emergency alerts.
 
