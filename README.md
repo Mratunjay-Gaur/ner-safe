@@ -3,7 +3,7 @@
 
 <div align="center">
 
-<img src="./assets/team-black-bulls-logo.png" alt="Team Black Bulls Logo" width="260"/>
+<img src="[./assets/team-black-bulls-logo.png](https://static.vecteezy.com/system/resources/thumbnails/047/650/580/small/silhouettes-of-mountain-landscape-environment-concept-black-and-white-illustration-free-png.png)" alt="Team Black Bulls Logo" width="260"/>
 
 <h2>Team Black Bulls</h2>
 
