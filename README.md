@@ -1,11 +1,16 @@
 # NER-SAFE 🛡️
 ### *AI-Powered Multi-Hazard Early Warning & Operational Telemetry System for the North Eastern Region of India*
 
-## <img width="840" height="350" alt="image" src="https://github.com/user-attachments/assets/1fe87820-7c80-412d-97b5-7fc2e9ece0ea" />
-Team Black Bulls
+<div align="center">
 
-**Team Lead & Developer:**  
-Mratunjay Gaur
+<img src="./assets/team-black-bulls-logo.png" alt="Team Black Bulls Logo" width="260"/>
+
+<h2>Team Black Bulls</h2>
+
+</div>
+
+### Team Lead & Developer
+**Mratunjay Gaur**
 
 **Contributors:**  
 - Sajid Ali Ansari
