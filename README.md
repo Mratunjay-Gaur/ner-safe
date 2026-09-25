@@ -23,7 +23,7 @@
 ### NER-SAFE Working Prototype
 
 [▶️ Watch NER-SAFE Demo Video](https://drive.google.com/file/d/1liRIvIIYZUNQOUYuhGt0hVo-68-yuBvP/view?usp=sharing)
-For better clarity, judges are requested to watch the demo video in the highest available resolution (HD/Full HD) and in full-screen mode. This will provide a clearer view of the interface, maps, data visualizations, and system features.
+Requested to watch the demo video in Full Screen and use the ⚙️ Settings button → Quality → Highest Available Resolution (HD) for the best viewing experience.
 
 > The demo video demonstrates the working NER-SAFE platform, including live monitoring, 8-State NER Hub, AI-assisted risk assessment, GIS monitoring, incident reporting, authority monitoring, cross-border weather monitoring, multilingual support, and emergency alerts.
 
