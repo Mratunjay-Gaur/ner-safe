@@ -444,15 +444,31 @@ APP_URL=http://localhost:3000
 
 ## 📸 Screenshots & UI Showcase
 
-*(Add your application screenshots in the `assets/` folder to display here)*
+### 🏠 NER-SAFE Introduction
+The NER-SAFE entry screen provides a clear overview of the platform and its mission for real-time disaster monitoring and early warning across the North Eastern Region.
 
-| Command Center & Live Telemetry | Risk Monitor & Gemini AI Assessment |
-|:---:|:---:|
-| ![Live Monitor Placeholder]() | ![Risk Monitor Placeholder](https://via.placeholder.com/600x340/0f172a/38bdf8?text=Gemini+AI+Landslide+Risk+Assessment) |
+![NER-SAFE Introduction](./assets/ner-safe-intro.png)
 
-| Cross-Border Weather & Hazard Corridors | GIS Incident Map & Triage Console |
-|:---:|:---:|
-| ![Cross-Border Map](https://via.placeholder.com/600x340/0f172a/38bdf8?text=Cross-Border+Transboundary+Corridor+Map) | ![GIS Incident Map](https://via.placeholder.com/600x340/0f172a/38bdf8?text=Interactive+Leaflet+GIS+Triage+Console) |
+---
+
+### 🗺️ AI-Assisted Risk Monitor
+The Risk Monitor visualizes estimated landslide risk across the 8 NER states using multi-factor environmental indicators and AI-assisted analysis.
+
+![AI-Assisted Risk Monitor](./assets/risk-monitor.png)
+
+---
+
+### 📍 Geo-Tagged Incident Reporting
+The Report Incident module allows citizens and field personnel to submit hazard reports with precise GPS location and photo/video evidence.
+
+![Geo-Tagged Incident Reporting](./assets/report-incident.png)
+
+---
+
+### 🚨 Authority Incident Monitor
+The Authority Incident Monitor provides a centralized operational view for reviewing reported incidents, locations, evidence, priority targets, and workflow status.
+
+![Authority Incident Monitor](./assets/authority-incident-monitor.png)
 
 ---
 
